@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2015, Hewlett-Packard Laboratories, Nic McDonald
+ * See LICENSE file for details
+ */
+#ifndef COST_GLUEFACTORYCOMPOSITE_H_
+#define COST_GLUEFACTORYCOMPOSITE_H_
+
+#include <prim/prim.h>
+#include <topos/hyperx/Engine.h>
+
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
+
+#include "cost/Calculator.h"
+
+namespace calc {
+
+class GlueFactoryComposite : public Calculator {
+ public:
+  GlueFactoryComposite();
+  ~GlueFactoryComposite();
+
+  f64 cost(const topos::hyperx::Hyperx& _hyperx) const override;
+
+  const std::vector<std::string>& extFields() const override;
+
+  std::unordered_map<std::string, std::string> extValues(
+      const topos::hyperx::Hyperx& _hyperx) const override;
+
+ private:
+  static const std::vector<std::string> EXT_FIELDS;
+  static const std::unordered_map<u64, std::tuple<f64, f64> > ROUTERS;
+  static constexpr f64 ELECTRICAL_SERDES_AREA = 1.2;  // mm^2
+  static constexpr f64 OPTICAL_SERDES_AREA = 0.42;  // mm^2
+  static constexpr f64 MZM_AREA = 1.5;  // mm^2
+  static constexpr f64 ELECTRICAL_SERDES_POWER = 0.384;  // W
+  static constexpr f64 OPTICAL_SERDES_POWER = 0.384;  // W
+  static constexpr f64 MZM_LASER_POWER = 0.063;  // W
+};
+
+}  // namespace calc
+
+#endif  // COST_GLUEFACTORYCOMPOSITE_H_

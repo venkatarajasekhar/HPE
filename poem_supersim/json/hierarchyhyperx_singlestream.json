@@ -1,0 +1,235 @@
+{
+  "simulator": {
+    "cycle_time": 813, // picoseconds
+    "print_progress": true,
+    "print_interval": 1.0  // seconds
+  },
+  "random": {
+    "seed": 12345678
+  },
+  "network": {
+    "topology": "hierarchyhyperx",
+    "num_vcs": 1,
+    "hierarchy": 2,
+    "global_dimension_widths": [6, 2],
+    "global_dimension_weights": [1, 1],
+    "local_dimension_widths": [3, 2],
+    "local_dimension_weights": [1, 1],
+    "global_links_per_router": 1,
+    "concentration": 1,
+    //"noc_width": 7,
+    //"noc_weight": 2,
+    //"noc_concentration": 6,
+    "internal_local_channel": {
+      "latency": 1 // cycles
+    },
+    "internal_global_channel": {
+      "latency": 5 // cycles
+    },
+    "external_channel": {
+      "latency": 5 // cycles
+    },
+    "channel_log": {
+      "file": "channels.csv"
+    },
+    "interface": {
+      "type": "poem",
+      "crossbar_scheduler": {
+        "allocator": {
+          "type": "r_separable",
+          "slip_latch": true,
+          "resource_arbiter": {
+            "type": "comparing",
+            "greater": false
+          }
+        }
+      },
+      "init_credits": 14,
+      "crossbar": {
+        "latency": 1 // cycles
+      }
+    },
+    "router": {
+      "routing": {
+        "algorithm": "dimension_ordered",
+        "latency": 1, // cycles
+        "all_vcs": false
+      },
+      "input_queue_depth": 14,  // min is 14
+      "local_queue_depth": 6,  // min is 6
+      "output_queue_depth": 3,  // min is 3
+      "crossbar": {
+        "latency": 1 // cycles
+      },
+      "crossbar_scheduler": {
+        "allocator": {
+          "type": "r_separable",
+          "slip_latch": true,
+          "resource_arbiter": {
+            "type": "comparing",
+            "greater": false
+          }
+        }
+      },
+      "output_crossbar": {
+        "latency": 1 // cycles
+      },
+      "output_crossbar_scheduler": {
+        "allocator": {
+          "type": "r_separable",
+          "slip_latch": true,
+          "resource_arbiter": {
+            "type": "comparing",
+            "greater": false
+          }
+        }
+      }
+    }
+  },
+  "application": {
+    "type": "single_stream",
+    "max_injection_rate": 1.0,
+    "terminal": {
+      "num_messages": 100000,
+      "min_message_size": 1,
+      "max_message_size": 1,
+      "max_packet_size": 1
+    },
+    "message_log": {
+      "file": "data.mpf.gz"
+    },
+    "rate_log": {
+      "file": "rates.csv"
+    },
+    "source_terminal": 0,  // < 0 is random
+    "destination_terminal": 1049  // < 0 is random
+  },
+  "debug": [
+    "Application"]/*,
+    "Network.Router_[0-0-0].InputQueue_0_0",
+    "Network.Router_[0-0-0].InputQueue_0_1",
+    "Network.Router_[0-0-0].InputQueue_1_0",
+    "Network.Router_[0-0-0].InputQueue_1_1",
+    "Network.Router_[0-0-0].InputQueue_2_0",
+    "Network.Router_[0-0-0].InputQueue_2_1",
+    "Network.Router_[0-0-0].InputQueue_3_0",
+    "Network.Router_[0-0-0].InputQueue_3_1",
+    "Network.Router_[0-0-0].InputQueue_4_0",
+    "Network.Router_[0-0-0].InputQueue_4_1",
+    "Network.Router_[0-0-0].LocalQueue_5_0",
+    "Network.Router_[0-0-0].LocalQueue_5_1",
+    "Network.Router_[0-0-0].LocalQueue_6_0",
+    "Network.Router_[0-0-0].LocalQueue_6_1",
+    "Network.Router_[0-0-0].LocalQueue_7_0",
+    "Network.Router_[0-0-0].LocalQueue_7_1",
+    "Network.Router_[0-0-0].LocalQueue_8_0",
+    "Network.Router_[0-0-0].LocalQueue_8_1",
+    "Network.Router_[0-0-0].LocalQueue_9_0",
+    "Network.Router_[0-0-0].LocalQueue_9_1",
+    "Network.Router_[0-0-0].CrossbarScheduler",
+    "Network.Router_[0-0-0].OutputQueue_0_0",
+    "Network.Router_[0-0-0].OutputQueue_0_1",
+    "Network.Router_[0-0-0].OutputQueue_1_0",
+    "Network.Router_[0-0-0].OutputQueue_1_1",
+    "Network.Router_[0-0-0].OutputQueue_2_0",
+    "Network.Router_[0-0-0].OutputQueue_2_1",
+    "Network.Router_[0-0-0].OutputQueue_3_0",
+    "Network.Router_[0-0-0].OutputQueue_3_1",
+    "Network.Router_[0-0-0].OutputQueue_4_0",
+    "Network.Router_[0-0-0].OutputQueue_4_1",
+    "Network.Router_[0-0-0].Ejector_0",
+    "Network.Router_[0-0-0].Ejector_1",
+    "Network.Router_[0-0-0].Ejector_2",
+    "Network.Router_[0-0-0].Ejector_3",
+    "Network.Router_[0-0-0].Ejector_4",
+    "Network.Router_[0-0-0].Ejector_5",
+    "Network.Router_[0-0-0].Ejector_6",
+    "Network.Router_[0-0-0].Ejector_7",
+    "Network.Router_[0-0-0].Ejector_8",
+    "Network.Router_[0-0-0].Ejector_9",
+
+    "Network.Router_[1-0-0].InputQueue_0_0",
+    "Network.Router_[1-0-0].InputQueue_0_1",
+    "Network.Router_[1-0-0].InputQueue_1_0",
+    "Network.Router_[1-0-0].InputQueue_1_1",
+    "Network.Router_[1-0-0].InputQueue_2_0",
+    "Network.Router_[1-0-0].InputQueue_2_1",
+    "Network.Router_[1-0-0].InputQueue_3_0",
+    "Network.Router_[1-0-0].InputQueue_3_1",
+    "Network.Router_[1-0-0].InputQueue_4_0",
+    "Network.Router_[1-0-0].InputQueue_4_1",
+    "Network.Router_[1-0-0].LocalQueue_5_0",
+    "Network.Router_[1-0-0].LocalQueue_5_1",
+    "Network.Router_[1-0-0].LocalQueue_6_0",
+    "Network.Router_[1-0-0].LocalQueue_6_1",
+    "Network.Router_[1-0-0].LocalQueue_7_0",
+    "Network.Router_[1-0-0].LocalQueue_7_1",
+    "Network.Router_[1-0-0].LocalQueue_8_0",
+    "Network.Router_[1-0-0].LocalQueue_8_1",
+    "Network.Router_[1-0-0].LocalQueue_9_0",
+    "Network.Router_[1-0-0].LocalQueue_9_1",
+    "Network.Router_[1-0-0].CrossbarScheduler",
+    "Network.Router_[1-0-0].OutputQueue_0_0",
+    "Network.Router_[1-0-0].OutputQueue_0_1",
+    "Network.Router_[1-0-0].OutputQueue_1_0",
+    "Network.Router_[1-0-0].OutputQueue_1_1",
+    "Network.Router_[1-0-0].OutputQueue_2_0",
+    "Network.Router_[1-0-0].OutputQueue_2_1",
+    "Network.Router_[1-0-0].OutputQueue_3_0",
+    "Network.Router_[1-0-0].OutputQueue_3_1",
+    "Network.Router_[1-0-0].OutputQueue_4_0",
+    "Network.Router_[1-0-0].OutputQueue_4_1",
+    "Network.Router_[1-0-0].Ejector_0",
+    "Network.Router_[1-0-0].Ejector_1",
+    "Network.Router_[1-0-0].Ejector_2",
+    "Network.Router_[1-0-0].Ejector_3",
+    "Network.Router_[1-0-0].Ejector_4",
+    "Network.Router_[1-0-0].Ejector_5",
+    "Network.Router_[1-0-0].Ejector_6",
+    "Network.Router_[1-0-0].Ejector_7",
+    "Network.Router_[1-0-0].Ejector_8",
+    "Network.Router_[1-0-0].Ejector_9",
+
+    "Network.Router_[2-0-0].InputQueue_0_0",
+    "Network.Router_[2-0-0].InputQueue_0_1",
+    "Network.Router_[2-0-0].InputQueue_1_0",
+    "Network.Router_[2-0-0].InputQueue_1_1",
+    "Network.Router_[2-0-0].InputQueue_2_0",
+    "Network.Router_[2-0-0].InputQueue_2_1",
+    "Network.Router_[2-0-0].InputQueue_3_0",
+    "Network.Router_[2-0-0].InputQueue_3_1",
+    "Network.Router_[2-0-0].InputQueue_4_0",
+    "Network.Router_[2-0-0].InputQueue_4_1",
+    "Network.Router_[2-0-0].LocalQueue_5_0",
+    "Network.Router_[2-0-0].LocalQueue_5_1",
+    "Network.Router_[2-0-0].LocalQueue_6_0",
+    "Network.Router_[2-0-0].LocalQueue_6_1",
+    "Network.Router_[2-0-0].LocalQueue_7_0",
+    "Network.Router_[2-0-0].LocalQueue_7_1",
+    "Network.Router_[2-0-0].LocalQueue_8_0",
+    "Network.Router_[2-0-0].LocalQueue_8_1",
+    "Network.Router_[2-0-0].LocalQueue_9_0",
+    "Network.Router_[2-0-0].LocalQueue_9_1",
+    "Network.Router_[2-0-0].CrossbarScheduler",
+    "Network.Router_[2-0-0].OutputQueue_0_0",
+    "Network.Router_[2-0-0].OutputQueue_0_1",
+    "Network.Router_[2-0-0].OutputQueue_1_0",
+    "Network.Router_[2-0-0].OutputQueue_1_1",
+    "Network.Router_[2-0-0].OutputQueue_2_0",
+    "Network.Router_[2-0-0].OutputQueue_2_1",
+    "Network.Router_[2-0-0].OutputQueue_3_0",
+    "Network.Router_[2-0-0].OutputQueue_3_1",
+    "Network.Router_[2-0-0].OutputQueue_4_0",
+    "Network.Router_[2-0-0].OutputQueue_4_1",
+    "Network.Router_[2-0-0].Ejector_0",
+    "Network.Router_[2-0-0].Ejector_1",
+    "Network.Router_[2-0-0].Ejector_2",
+    "Network.Router_[2-0-0].Ejector_3",
+    "Network.Router_[2-0-0].Ejector_4",
+    "Network.Router_[2-0-0].Ejector_5",
+    "Network.Router_[2-0-0].Ejector_6",
+    "Network.Router_[2-0-0].Ejector_7",
+    "Network.Router_[2-0-0].Ejector_8",
+    "Network.Router_[2-0-0].Ejector_9"
+  ]*/
+}

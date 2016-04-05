@@ -1,0 +1,45 @@
+/*
+ * Copyright (c) 2013-2016, Hewlett-Packard Laboratories, Qi Li
+ * See LICENSE file for details
+ */
+#ifndef NETWORK_HIERARCHYHYPERX_ROUTINGFUNCTIONFACTORY_H_
+#define NETWORK_HIERARCHYHYPERX_ROUTINGFUNCTIONFACTORY_H_
+
+#include <json/json.h>
+#include <prim/prim.h>
+
+#include <string>
+#include <vector>
+
+#include "event/Component.h"
+#include "network/RoutingFunctionFactory.h"
+
+namespace HierarchyHyperX {
+
+class RoutingFunctionFactory : public ::RoutingFunctionFactory {
+ public:
+  RoutingFunctionFactory(u32 _numVcs,
+                         const std::vector<u32>& _globalDimensionWidths,
+                         const std::vector<u32>& _globalDimensionWeights,
+                         const std::vector<u32>& _localDimensionWidths,
+                         const std::vector<u32>& _localDimensionWeights,
+                         u32 _globalLinksPerRouter,
+                         u32 _concentration);
+  ~RoutingFunctionFactory();
+  RoutingFunction* createRoutingFunction(
+      const std::string& _name, const Component* _parent, Router* _router,
+      u32 _inputPort, Json::Value _settings);
+
+ private:
+  u32 numVcs_;
+  const std::vector<u32> globalDimensionWidths_;
+  const std::vector<u32> globalDimensionWeights_;
+  const std::vector<u32> localDimensionWidths_;
+  const std::vector<u32> localDimensionWeights_;
+  u32 globalLinksPerRouter_;
+  u32 concentration_;
+};
+
+}  // namespace HierarchyHyperX
+
+#endif  // NETWORK_HIERARCHYHYPERX_ROUTINGFUNCTIONFACTORY_H_
