@@ -142,7 +142,7 @@ void DimOrderRoutingFunction::processRequest(
         u32 localDim;
         u32 portBase = concentration_;
         for (localDim = 0; localDim < localDimensions; localDim++) {
-          if (itr->at(localDim) != destinationAddress->at(localDim+1)) {
+          if (routerAddress.at(localDim) != itr->at(localDim)) {
             break;
           }
         portBase += ((localDimensionWidths_.at(localDim) - 1)
@@ -150,7 +150,7 @@ void DimOrderRoutingFunction::processRequest(
         }
         // more local router-to-router hops needed
         u32 src = routerAddress.at(localDim);
-        u32 dst = itr->at(localDim + 1);
+        u32 dst = itr->at(localDim);
         if (dst < src) {
           dst += localDimensionWidths_.at(localDim);
         }

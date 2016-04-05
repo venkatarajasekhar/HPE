@@ -92,9 +92,6 @@ Network::Network(const std::string& _name, const Component* _parent,
 
   // create a vector of local and global dimension widths
   std::vector<u32> allDimensionWidths(localDimensionWidths_);
-  allDimensionWidths.insert(allDimensionWidths.begin(),
-                            localDimensionWidths_.cbegin(),
-                            localDimensionWidths_.cend());
   allDimensionWidths.insert(allDimensionWidths.end(),
                             globalDimensionWidths_.cbegin(),
                             globalDimensionWidths_.cend());
@@ -144,7 +141,7 @@ Network::Network(const std::string& _name, const Component* _parent,
               strop::vecString<u32>(destinationAddress) +
               "-" + std::to_string(weight);
           Channel* channel = new Channel(channelName, this,
-                                         _settings["local_channel"]);
+                                         _settings["internal_local_channel"]);
           localChannels_.push_back(channel);
 
           // determine the port numbers
@@ -195,6 +192,7 @@ Network::Network(const std::string& _name, const Component* _parent,
           u32 virtualGlobalDstPort = virtualGlobalPortBase
                                      + ((globalDimWidth - 1 - offset) *
                                         globalDimWeight) + weight;
+
           // translate the virtual port to the actual router
           std::vector<u32> srcLocalAddress(localDimensions_);
           u32 product = 1;
@@ -219,7 +217,9 @@ Network::Network(const std::string& _name, const Component* _parent,
           for (s32 localDim = localDimensions_ - 1; localDim >= 0; localDim--) {
             dstLocalAddress.at(localDim) = virtualGlobalDstPort / product;
             virtualGlobalDstPort %= product;
-            product /= localDimensionWidths_.at(localDim);
+            if (localDim != 0) {
+              product /= localDimensionWidths_.at(localDim - 1);
+            }
           }
           assert(dstLocalAddress.size() == localDimensions_);
           u32 dstPort = virtualGlobalDstPort;
@@ -240,12 +240,16 @@ Network::Network(const std::string& _name, const Component* _parent,
               strop::vecString<u32>(dstAddress) +
               "-" + std::to_string(weight);
           Channel* channel = new Channel(channelName, this,
-                                         _settings["global_channel"]);
+                                         _settings["internal_global_channel"]);
           globalChannels_.push_back(channel);
+
+          srcPort += routerRadix - globalLinksPerRouter_;
+          dstPort += routerRadix - globalLinksPerRouter_;
 
           // link routers from source to destination
           routers_.at(srcAddress)->setOutputChannel(srcPort, channel);
           routers_.at(dstAddress)->setInputChannel(dstPort, channel);
+
           dbgprintf("linking %s:%u to %s:%u with %s",
                     strop::vecString<u32>(srcAddress).c_str(), srcPort,
                     strop::vecString<u32>(dstAddress).c_str(), dstPort,
@@ -310,6 +314,7 @@ Network::Network(const std::string& _name, const Component* _parent,
       interface->setInputChannel(outChannel);
     }
   }
+  printf("%s \n", "end point");
 }
 
 Network::~Network() {

@@ -12,6 +12,7 @@
 #include "network/hyperxpoemnoc2/Network.h"
 #include "network/torus/Network.h"
 #include "network/uno/Network.h"
+#include "network/hierarchyhyperx/Network.h"
 
 Network* NetworkFactory::createNetwork(
     const std::string& _name, const Component* _parent,
@@ -30,6 +31,8 @@ Network* NetworkFactory::createNetwork(
     return new HyperXPoemNoc1::Network(_name, _parent, _settings);
   } else if (topology == "hyperxpoemnoc2") {
     return new HyperXPoemNoc2::Network(_name, _parent, _settings);
+  } else if (topology == "hierarchyhyperx") {
+    return new HierarchyHyperX::Network(_name, _parent, _settings);
   } else {
     fprintf(stderr, "unknown netwok topology: %s\n", topology.c_str());
     assert(false);
