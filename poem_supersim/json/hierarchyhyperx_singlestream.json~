@@ -30,7 +30,7 @@
       "file": "channels.csv"
     },
     "interface": {
-      "type": "poem",
+      "type": "standard",
       "crossbar_scheduler": {
         "allocator": {
           "type": "r_separable",
@@ -41,20 +41,19 @@
           }
         }
       },
-      "init_credits": 14,
+      "init_credits": 1000,
       "crossbar": {
         "latency": 1 // cycles
       }
     },
     "router": {
+      "architecture": "input_queued",
       "routing": {
         "algorithm": "dimension_ordered",
         "latency": 1, // cycles
         "all_vcs": false
       },
-      "input_queue_depth": 14,  // min is 14
-      "local_queue_depth": 14,  // min is 6
-      "output_queue_depth": 14,  // min is 3
+      "input_queue_depth": 1000,  // min is 14
       "crossbar": {
         "latency": 1 // cycles
       },

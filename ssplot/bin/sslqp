@@ -1,0 +1,113 @@
+#!/usr/bin/env python3
+
+"""
+ * Copyright (c) 2012-2016, Nic McDonald
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * - Neither the name of prim nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+"""
+
+import argparse
+import os
+import ssplot
+import sys
+
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+
+
+def main(args):
+  stats = ssplot.LatencyStats(args.ifile)
+
+  if args.ibounds:
+    stats.bounds.readFile(args.ibounds)
+
+  stats.quadPlot(plt, args.ofile,
+                 title=args.title,
+                 spxmin=args.spxmin, spxmax=args.spxmax,
+                 spymin=args.spymin, spymax=args.spymax,
+                 ppxmin=args.ppxmin, ppxmax=args.ppxmax,
+                 ppymin=args.ppymin, ppymax=args.ppymax,
+                 cpxmin=args.cpxmin, cpxmax=args.cpxmax,
+                 cpymin=args.cpymin, cpymax=args.cpymax,
+                 lpxmin=args.lpxmin, lpxmax=args.lpxmax)
+
+  if args.obounds:
+    stats.bounds.writeFile(args.obounds)
+
+  return 0
+
+
+if __name__ == '__main__':
+  ap = argparse.ArgumentParser()
+  ap.add_argument('ifile',
+                  help='input latency file')
+  ap.add_argument('ofile',
+                  help='output plot file')
+
+  ap.add_argument('--title', default='',
+                  help='plot title')
+  ap.add_argument('--ibounds', default=None,
+                  help='bounds input file')
+  ap.add_argument('--obounds', default=None,
+                  help='bounds output file')
+
+  ap.add_argument('--spxmin', type=float, default=float('NaN'),
+                  help='scatter plot X-axis minimum')
+  ap.add_argument('--spxmax', type=float, default=float('NaN'),
+                  help='scatter plot X-axis maximum')
+  ap.add_argument('--spymin', type=float, default=float('NaN'),
+                  help='scatter plot Y-axis minimum')
+  ap.add_argument('--spymax', type=float, default=float('NaN'),
+                  help='scatter plot Y-axis maximum')
+
+  ap.add_argument('--ppxmin', type=float, default=float('NaN'),
+                  help='PDF plot X-axis minimum')
+  ap.add_argument('--ppxmax', type=float, default=float('NaN'),
+                  help='PDF plot X-axis maximum')
+  ap.add_argument('--ppymin', type=float, default=float('NaN'),
+                  help='PDF plot Y-axis minimum')
+  ap.add_argument('--ppymax', type=float, default=float('NaN'),
+                  help='PDF plot Y-axis maximum')
+
+  ap.add_argument('--cpxmin', type=float, default=float('NaN'),
+                  help='CDF plot X-axis minimum')
+  ap.add_argument('--cpxmax', type=float, default=float('NaN'),
+                  help='CDF plot X-axis maximum')
+  ap.add_argument('--cpymin', type=float, default=float('NaN'),
+                  help='CDF plot Y-axis minimum')
+  ap.add_argument('--cpymax', type=float, default=float('NaN'),
+                  help='CDF plot Y-axis maximum')
+
+  ap.add_argument('--lpxmin', type=float, default=float('NaN'),
+                  help='log CDF plot X-axis minimum')
+  ap.add_argument('--lpxmax', type=float, default=float('NaN'),
+                  help='log CDF plot X-axis maximum')
+
+  args = ap.parse_args()
+  sys.exit(main(args))

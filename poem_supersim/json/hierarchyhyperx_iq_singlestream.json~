@@ -30,7 +30,7 @@
       "file": "channels.csv"
     },
     "interface": {
-      "type": "poem",
+      "type": "standard",
       "crossbar_scheduler": {
         "allocator": {
           "type": "r_separable",
@@ -41,37 +41,37 @@
           }
         }
       },
-      "init_credits": 14,
+      "init_credits": 1000,
       "crossbar": {
         "latency": 1 // cycles
       }
     },
     "router": {
+      "architecture": "input_queued",
       "routing": {
         "algorithm": "dimension_ordered",
         "latency": 1, // cycles
-        "all_vcs": false
+        "all_vcs": true
       },
-      "input_queue_depth": 14,  // min is 14
-      "local_queue_depth": 14,  // min is 6
-      "output_queue_depth": 14,  // min is 3
+      "input_queue_depth": 1000,
       "crossbar": {
         "latency": 1 // cycles
       },
-      "crossbar_scheduler": {
+      "vc_scheduler": {
         "allocator": {
-          "type": "r_separable",
+          "type": "rc_separable",
           "slip_latch": true,
+          "iterations": 2,
           "resource_arbiter": {
             "type": "comparing",
             "greater": false
+          },
+          "client_arbiter": {
+            "type": "lslp"
           }
         }
       },
-      "output_crossbar": {
-        "latency": 1 // cycles
-      },
-      "output_crossbar_scheduler": {
+      "crossbar_scheduler": {
         "allocator": {
           "type": "r_separable",
           "slip_latch": true,
@@ -87,10 +87,10 @@
     "type": "single_stream",
     "max_injection_rate": 1,
     "terminal": {
-      "num_messages": 100000,
+      "num_messages": 20000,
       "min_message_size": 1,
-      "max_message_size": 1,
-      "max_packet_size": 1
+      "max_message_size": 64,
+      "max_packet_size": 16
     },
     "message_log": {
       "file": "data.mpf"
@@ -98,8 +98,8 @@
     "rate_log": {
       "file": "rates.csv"
     },
-    "source_terminal": 0,  // < 0 is random
-    "destination_terminal": 2  // < 0 is random
+    "source_terminal": -1,  // < 0 is random
+    "destination_terminal": -1  // < 0 is random
   },
   "debug": []
 }
