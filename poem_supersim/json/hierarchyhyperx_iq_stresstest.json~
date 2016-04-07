@@ -1,6 +1,6 @@
 {
   "simulator": {
-    "cycle_time": 813, // picoseconds
+    "cycle_time": 1000, // picoseconds
     "print_progress": true,
     "print_interval": 1.0  // seconds
   },
@@ -11,10 +11,10 @@
     "topology": "hierarchyhyperx",
     "num_vcs": 1,
     "hierarchy": 2,
-    "global_dimension_widths": [3],
-    "global_dimension_weights": [1],
-    "local_dimension_widths": [2],
-    "local_dimension_weights": [1],
+    "global_dimension_widths": [6, 2],
+    "global_dimension_weights": [1, 1],
+    "local_dimension_widths": [3, 2],
+    "local_dimension_weights": [1, 1],
     "global_links_per_router": 1,
     "concentration": 1,
     "internal_local_channel": {
@@ -41,7 +41,7 @@
           }
         }
       },
-      "init_credits": 1000,
+      "init_credits": 160,
       "crossbar": {
         "latency": 1 // cycles
       }
@@ -53,7 +53,7 @@
         "latency": 1, // cycles
         "all_vcs": true
       },
-      "input_queue_depth": 1000,
+      "input_queue_depth": 160,
       "crossbar": {
         "latency": 1 // cycles
       },
@@ -84,22 +84,27 @@
     }
   },
   "application": {
-    "type": "single_stream",
-    "max_injection_rate": 1,
-    "terminal": {
-      "num_messages": 20000,
+    "type": "stress_test",
+    "max_injection_rate": 0.80,
+    "warmup_threshold": 0.99,
+    "blast_terminal": {
+      "num_messages": 100,
       "min_message_size": 1,
       "max_message_size": 64,
-      "max_packet_size": 16
+      "max_packet_size": 16,
+      "warmup_interval": 200,  // delivered flits
+      "warmup_window": 15,
+      "warmup_attempts": 50,
+      "traffic_pattern": {
+        "type": "uniform_random"
+      }
     },
     "message_log": {
-      "file": "data.mpf"
+      "file": "data.mpf.gz"
     },
     "rate_log": {
       "file": "rates.csv"
-    },
-    "source_terminal": 4,  // < 0 is random
-    "destination_terminal": 3  // < 0 is random
+    }
   },
   "debug": []
 }

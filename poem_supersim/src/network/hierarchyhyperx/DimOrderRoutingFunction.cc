@@ -81,14 +81,14 @@ void DimOrderRoutingFunction::processRequest(
     }
     assert(globalOutputPorts.size() > 0);
 
-    // translate router address to virtual global router port number
+    // translate local router address to a virtual global router port number
     u32 product = 1;
     u32 virtualPort = 0;
     for (u32 localDim = 0; localDim < localDimensions; localDim++) {
-      virtualPort += routerAddress.at(localDim) * product;
       if (localDim > 0) {
         product *= localDimensionWidths_.at(localDim - 1);
       }
+      virtualPort += routerAddress.at(localDim) * product;
     }
     bool hasGlobalLinkToDst = false;
 
@@ -123,8 +123,8 @@ void DimOrderRoutingFunction::processRequest(
       }
       for (auto itr = globalOutputPorts.begin();
            itr != globalOutputPorts.end(); itr++) {
+        u32 globalOutputPort = *itr;
         for (s32 localDim = localDimensions - 1; localDim >= 0; localDim--) {
-          u32 globalOutputPort = *itr;
           localRouter.at(localDim) = globalOutputPort / product;
           globalOutputPort %= product;
           if (localDim != 0) {
