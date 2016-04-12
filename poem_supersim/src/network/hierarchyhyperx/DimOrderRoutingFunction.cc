@@ -41,9 +41,17 @@ void DimOrderRoutingFunction::processRequest(
   // ex: [c,1,...,m,1,...,n]
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
+  dbgprintf("Router address is %s \n",
+         strop::vecString<u32>(routerAddress).c_str());
+  dbgprintf("Destination address is %s \n",
+         strop::vecString<u32>(*destinationAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
   u32 globalDimensions = globalDimensionWidths_.size();
   u32 localDimensions = localDimensionWidths_.size();
+  u32 numRoutersPerGlobalRouter = 1;
+  for (u32 tmp = 0; tmp < localDimensions; tmp++) {
+    numRoutersPerGlobalRouter *= localDimensionWidths_.at(tmp);
+  }
 
   // determine if already at destination virtual global router
   u32 globalDim;
@@ -86,7 +94,7 @@ void DimOrderRoutingFunction::processRequest(
     u32 virtualPort = 0;
     for (u32 localDim = 0; localDim < localDimensions; localDim++) {
       if (localDim > 0) {
-        product *= localDimensionWidths_.at(localDim - 1);
+       product *= localDimensionWidths_.at(localDim - 1);
       }
       virtualPort += routerAddress.at(localDim) * product;
     }
@@ -101,8 +109,8 @@ void DimOrderRoutingFunction::processRequest(
     // test if router has a global link to destination global router
     for (u32 globalLink = 0; globalLink < globalLinksPerRouter_;
          globalLink++) {
-      if (globalOutputPorts.find(virtualPort * globalLinksPerRouter_
-                                 + globalLink)
+      if (globalOutputPorts.find(virtualPort
+                                 + globalLink * numRoutersPerGlobalRouter)
           != globalOutputPorts.end()) {
         // found direct global link to destation global router
         hasGlobalLinkToDst = true;
@@ -112,20 +120,23 @@ void DimOrderRoutingFunction::processRequest(
         assert(res);
       }
     }
+
     // if router has no direct global link to destination global router
     if (hasGlobalLinkToDst != true) {
       std::set< std::vector<u32> > routerLinkedToGlobalDst;
+
       // translate global router port number to local router
-      std::vector<u32> localRouter(localDimensions);
-      u32 product = 1;
-      for (u32 tmp = 0; tmp < localDimensions - 1; tmp++) {
-        product *= localDimensionWidths_.at(tmp);
-      }
       for (auto itr = globalOutputPorts.begin();
            itr != globalOutputPorts.end(); itr++) {
+        std::vector<u32> localRouter(localDimensions);
+        u32 product = 1;
+        for (u32 tmp = 0; tmp < localDimensions - 1; tmp++) {
+          product *= localDimensionWidths_.at(tmp);
+        }
         u32 globalOutputPort = *itr;
         for (s32 localDim = localDimensions - 1; localDim >= 0; localDim--) {
-          localRouter.at(localDim) = globalOutputPort / product;
+          localRouter.at(localDim) = (globalOutputPort / product)
+            % localDimensionWidths_.at(localDim);
           globalOutputPort %= product;
           if (localDim != 0) {
             product /= localDimensionWidths_.at(localDim - 1);

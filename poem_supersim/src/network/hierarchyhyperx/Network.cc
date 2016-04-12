@@ -169,6 +169,10 @@ Network::Network(const std::string& _name, const Component* _parent,
   DimensionIterator globalRouterIterator(globalDimensionWidths_);
   std::vector<u32> globalRouterAddress(globalDimensionWidths_.size());
   globalRouterIterator.reset();
+  u32 numRoutersPerGlobalRouter = 1;
+  for (u32 tmp = 0; tmp < localDimensions_; tmp++) {
+    numRoutersPerGlobalRouter *= localDimensionWidths_.at(tmp);
+  }
   while (globalRouterIterator.next(&globalRouterAddress)) {
     u32 virtualGlobalPortBase = 0;
     for (u32 globalDim = 0; globalDim < globalDimensions_; globalDim++) {
@@ -200,30 +204,36 @@ Network::Network(const std::string& _name, const Component* _parent,
           for (u32 tmp = 0; tmp < localDimensions_ - 1; tmp++) {
             product *= localDimensionWidths_.at(tmp);
           }
+          u32 srcPortCopy = virtualGlobalSrcPort;
           for (s32 localDim = localDimensions_ - 1; localDim >= 0; localDim--) {
-            srcLocalAddress.at(localDim) = virtualGlobalSrcPort / product;
-            virtualGlobalSrcPort %= product;
+            srcLocalAddress.at(localDim) = (srcPortCopy / product)
+              % localDimensionWidths_.at(localDim);
+            srcPortCopy %= product;
             if (localDim != 0) {
               product /= localDimensionWidths_.at(localDim - 1);
             }
           }
           assert(srcLocalAddress.size() == localDimensions_);
-          u32 srcPort = virtualGlobalSrcPort;
+          u32 srcPort = virtualGlobalSrcPort / numRoutersPerGlobalRouter;
+          assert(srcPort < globalLinksPerRouter_);
 
           std::vector<u32> dstLocalAddress(localDimensions_);
           product = 1;
           for (u32 tmp = 0; tmp < localDimensions_ - 1; tmp++) {
             product *= localDimensionWidths_.at(tmp);
           }
+          u32 dstPortCopy = virtualGlobalDstPort;
           for (s32 localDim = localDimensions_ - 1; localDim >= 0; localDim--) {
-            dstLocalAddress.at(localDim) = virtualGlobalDstPort / product;
-            virtualGlobalDstPort %= product;
+            dstLocalAddress.at(localDim) = (dstPortCopy / product)
+              % localDimensionWidths_.at(localDim);
+            dstPortCopy %= product;
             if (localDim != 0) {
               product /= localDimensionWidths_.at(localDim - 1);
             }
           }
           assert(dstLocalAddress.size() == localDimensions_);
-          u32 dstPort = virtualGlobalDstPort;
+          u32 dstPort = virtualGlobalDstPort / numRoutersPerGlobalRouter;
+          assert(dstPort < globalLinksPerRouter_);
 
           // src and dst router address
           std::vector<u32> srcAddress(srcLocalAddress);
@@ -247,14 +257,14 @@ Network::Network(const std::string& _name, const Component* _parent,
           srcPort += routerRadix - globalLinksPerRouter_;
           dstPort += routerRadix - globalLinksPerRouter_;
 
-          // link routers from source to destination
-          routers_.at(srcAddress)->setOutputChannel(srcPort, channel);
-          routers_.at(dstAddress)->setInputChannel(dstPort, channel);
-
-          dbgprintf("linking %s:%u to %s:%u with %s",
+          dbgprintf("linking %s:%u to %s:%u with %s \n",
                     strop::vecString<u32>(srcAddress).c_str(), srcPort,
                     strop::vecString<u32>(dstAddress).c_str(), dstPort,
                     channelName.c_str());
+
+          // link routers from source to destination
+          routers_.at(srcAddress)->setOutputChannel(srcPort, channel);
+          routers_.at(dstAddress)->setInputChannel(dstPort, channel);
         }
       }
       virtualGlobalPortBase += ((globalDimWidth - 1) * globalDimWeight);
