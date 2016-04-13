@@ -116,6 +116,8 @@ void DimOrderRoutingFunction::processRequest(
       }
       assert(localRouter.size() == localDimensions);
       routerLinkedToGlobalDst.insert(localRouter);
+      dbgprintf("Connected local router address is %s \n",
+         strop::vecString<u32>(localRouter).c_str());
       u32 connectedPort = (*itr) / numRoutersPerGlobalRouter;
       assert(connectedPort < globalLinksPerRouter_);
       // test if router has a global link to destination global router
@@ -157,7 +159,9 @@ void DimOrderRoutingFunction::processRequest(
              weight++) {
           bool res = outputPorts.insert(portBase + offset + weight).second;
           (void)res;
-          assert(res);
+          // there are cases where the same output is inserted multiple
+          // times, so should not assert res
+          // assert(res);
         }
       }
     }
