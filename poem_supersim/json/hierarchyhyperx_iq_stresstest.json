@@ -13,9 +13,9 @@
     "hierarchy": 2,
     "global_dimension_widths": [6, 2],
     "global_dimension_weights": [1, 1],
-    "local_dimension_widths": [3],
-    "local_dimension_weights": [1],
-    "global_links_per_router": 2,
+    "local_dimension_widths": [3, 2],
+    "local_dimension_weights": [1, 1],
+    "global_links_per_router": 1,
     "concentration": 1,
     "internal_local_channel": {
       "latency": 1 // cycles

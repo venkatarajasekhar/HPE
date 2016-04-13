@@ -85,7 +85,7 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.1,
+    "max_injection_rate": 0.5,
     "warmup_threshold": 0.99,
     "blast_terminal": {
       "num_messages": 100,
