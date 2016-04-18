@@ -24,7 +24,8 @@ class DimOrderRoutingFunction : public RoutingFunction {
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
-                          u32 _concentration, u32 _globalLinksPerRouter, bool _allVcs);
+                          u32 _concentration, u32 _globalLinksPerRouter,
+                          bool _allVcs);
   ~DimOrderRoutingFunction();
 
  protected:

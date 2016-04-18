@@ -47,7 +47,7 @@ class Network : public ::Network {
   std::vector<u32> localDimensionWidths_;
   std::vector<u32> localDimensionWeights_;
   u32 concentration_;
-  //user specifed number of global links per router
+  // user specifed number of global links per router
   u32 globalLinksPerRouter_;
 
   DimensionalArray<Router*> routers_;

@@ -25,7 +25,9 @@ class RoutingFunctionFactory : public ::RoutingFunctionFactory {
                          const std::vector<u32>& _localDimensionWeights,
                          u32 _globalLinksPerRouter,
                          u32 _concentration);
+
   ~RoutingFunctionFactory();
+
   RoutingFunction* createRoutingFunction(
       const std::string& _name, const Component* _parent, Router* _router,
       u32 _inputPort, Json::Value _settings);

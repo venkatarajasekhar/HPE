@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, Hewlett-Packard Laboratories, Qi Li
+ * Copyright (c) 2016, Hewlett-Packard Laboratories, Qi Li
  * See LICENSE file for details
  */
 #include "network/hierarchyhyperx/DimOrderRoutingFunction.h"

@@ -10,9 +10,9 @@
   "network": {
     "topology": "hyperx",
     "num_vcs": 8,
-    "dimension_widths": [2, 3, 5],
-    "dimension_weights": [2, 1, 1],
-    "concentration": 1,
+    "dimension_widths": [5, 5],
+    "dimension_weights": [1, 1],
+    "concentration": 4,
     "internal_channel": {
       "latency": 1 // cycles
     },
@@ -34,7 +34,7 @@
           }
         }
       },
-      "init_credits": 160,
+      "init_credits": 120,
       "crossbar": {
         "latency": 1 // cycles
       }
@@ -46,7 +46,7 @@
         "latency": 1, // cycles
         "all_vcs": true
       },
-      "input_queue_depth": 160,
+      "input_queue_depth": 120,
       "crossbar": {
         "latency": 1 // cycles
       },
@@ -83,13 +83,13 @@
     "blast_terminal": {
       "num_messages": 100,
       "min_message_size": 1,
-      "max_message_size": 64,
-      "max_packet_size": 16,
+      "max_message_size": 1,
+      "max_packet_size": 1,
       "warmup_interval": 200,  // delivered flits
       "warmup_window": 15,
-      "warmup_attempts": 50,
+      "warmup_attempts": 30,
       "traffic_pattern": {
-        "type": "uniform_random"
+        "type": "bit_complement"
       }
     },
     "message_log": {
@@ -100,7 +100,5 @@
     }
   },
   "debug": [
-    "Application",
-    "Application.BlastTerminal_27"
   ]
 }
