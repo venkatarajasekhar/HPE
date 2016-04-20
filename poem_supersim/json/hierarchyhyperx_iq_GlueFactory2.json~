@@ -9,7 +9,7 @@
   },
   "network": {
     "topology": "hierarchyhyperx",
-    "num_vcs": 2,
+    "num_vcs": 8,
     "hierarchy": 2,
     "global_dimension_widths": [4],
     "global_dimension_weights": [8],
@@ -88,13 +88,13 @@
     "max_injection_rate": 0.1,
     "warmup_threshold": 0.99,
     "blast_terminal": {
-      "num_messages": 100,
+      "num_messages": 50,
       "min_message_size": 1,
       "max_message_size": 1,
       "max_packet_size": 1,
       "warmup_interval": 200,  // delivered flits
       "warmup_window": 15,
-      "warmup_attempts": 40,
+      "warmup_attempts": 30,
       "traffic_pattern": {
         "type": "uniform_random"
       }
