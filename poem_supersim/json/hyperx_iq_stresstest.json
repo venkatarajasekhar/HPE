@@ -10,9 +10,9 @@
   "network": {
     "topology": "hyperx",
     "num_vcs": 8,
-    "dimension_widths": [5, 5],
-    "dimension_weights": [1, 1],
-    "concentration": 4,
+    "dimension_widths": [2],
+    "dimension_weights": [32],
+    "concentration": 80,
     "internal_channel": {
       "latency": 1 // cycles
     },
@@ -89,7 +89,7 @@
       "warmup_window": 15,
       "warmup_attempts": 30,
       "traffic_pattern": {
-        "type": "bit_complement"
+        "type": "uniform_random"
       }
     },
     "message_log": {

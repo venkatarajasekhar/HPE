@@ -10,9 +10,9 @@
   "network": {
     "topology": "hyperx",
     "num_vcs": 8,
-    "dimension_widths": [6, 6],
-    "dimension_weights": [1, 1],
-    "concentration": 4,
+    "dimension_widths": [2],
+    "dimension_weights": [32],
+    "concentration": 80,
     "internal_channel": {
       "latency": 1 // cycles
     },
