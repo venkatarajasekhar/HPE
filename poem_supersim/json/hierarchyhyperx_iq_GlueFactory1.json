@@ -16,7 +16,7 @@
     "local_dimension_widths": [4],
     "local_dimension_weights": [1],
     "global_links_per_router": 2,
-    "concentration": 2,
+    "concentration": 1,
     "internal_local_channel": {
       "latency": 1 // cycles
     },
@@ -88,15 +88,15 @@
     "max_injection_rate": 0.4,
     "warmup_threshold": 0.99,
     "blast_terminal": {
-      "num_messages": 50,
+      "num_messages": 100,
       "min_message_size": 1,
       "max_message_size": 1,
       "max_packet_size": 1,
       "warmup_interval": 200,  // delivered flits
       "warmup_window": 15,
-      "warmup_attempts": 20,
+      "warmup_attempts": 30,
       "traffic_pattern": {
-        "type": "uniform_random"
+        "type": "bit_complement"
       }
     },
     "message_log": {

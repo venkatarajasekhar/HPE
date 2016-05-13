@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015, Hewlett-Packard Laboratories, Nic McDonald
+ * Copyright (c) 2016, Hewlett-Packard Laboratories, Qi Li
  * See LICENSE file for details
  */
 #include "types/Flit.h"

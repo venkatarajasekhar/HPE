@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015, Hewlett-Packard Laboratories, Nic McDonald
+ * Copyright (c) 2016, Hewlett-Packard Laboratories, Qi Li
  * See LICENSE file for details
  */
 #include "application/stresstest/BlastTerminal.h"
@@ -13,6 +13,7 @@
 #include "stats/MessageLog.h"
 #include "stats/calc.h"
 #include "types/Flit.h"
+#include "types/ValiantFlit.h"
 #include "types/Packet.h"
 #include "traffic/TrafficPatternFactory.h"
 
@@ -247,7 +248,7 @@ void BlastTerminal::sendNextMessage() {
     for (u32 f = 0; f < packetLength; f++) {
       bool headFlit = f == 0;
       bool tailFlit = f == (packetLength - 1);
-      Flit* flit = new Flit(f, headFlit, tailFlit, packet);
+      ValiantFlit* flit = new ValiantFlit(f, headFlit, tailFlit, packet);
       flit->setVc(vc);
       packet->setFlit(f, flit);
     }

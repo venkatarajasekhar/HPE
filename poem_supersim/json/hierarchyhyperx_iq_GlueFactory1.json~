@@ -16,7 +16,7 @@
     "local_dimension_widths": [4],
     "local_dimension_weights": [1],
     "global_links_per_router": 2,
-    "concentration": 2,
+    "concentration": 1,
     "internal_local_channel": {
       "latency": 1 // cycles
     },
@@ -96,7 +96,7 @@
       "warmup_window": 15,
       "warmup_attempts": 20,
       "traffic_pattern": {
-        "type": "uniform_random"
+        "type": "bit_complement"
       }
     },
     "message_log": {
