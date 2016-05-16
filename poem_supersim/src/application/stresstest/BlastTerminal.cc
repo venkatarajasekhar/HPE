@@ -13,7 +13,6 @@
 #include "stats/MessageLog.h"
 #include "stats/calc.h"
 #include "types/Flit.h"
-#include "types/ValiantFlit.h"
 #include "types/Packet.h"
 #include "traffic/TrafficPatternFactory.h"
 
@@ -219,6 +218,11 @@ void BlastTerminal::sendNextMessage() {
   u32 destination = trafficPattern_->nextDestination();
   assert(destination < app_->numTerminals());
 
+  // pick a random intermediate destination (for Valiant routing only)
+  u32 intermediate = gRandom->randomU64(0, app_->numTerminals() - 1);
+  const std::vector<u32>* intermediateAddress = gSim->getApplication()
+    ->getTerminal(intermediate)->address();
+
   // pick a random message length
   u32 messageLength = gRandom->randomU64(minMessageSize_, maxMessageSize_);
   u32 numPackets = messageLength / maxPacketSize_;
@@ -248,7 +252,9 @@ void BlastTerminal::sendNextMessage() {
     for (u32 f = 0; f < packetLength; f++) {
       bool headFlit = f == 0;
       bool tailFlit = f == (packetLength - 1);
-      ValiantFlit* flit = new ValiantFlit(f, headFlit, tailFlit, packet);
+      Flit* flit = new Flit(f, headFlit, tailFlit, packet);
+      // set intermidiate address of flit (used by Valiant routing only)
+      flit->setIntermediateDst(intermediateAddress);
       flit->setVc(vc);
       packet->setFlit(f, flit);
     }

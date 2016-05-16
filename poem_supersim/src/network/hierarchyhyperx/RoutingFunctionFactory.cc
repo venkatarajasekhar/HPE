@@ -7,6 +7,7 @@
 #include <cassert>
 
 #include "network/hierarchyhyperx/DimOrderRoutingFunction.h"
+#include "network/hierarchyhyperx/ValiantRoutingFunction.h"
 #include "network/RoutingFunction.h"
 
 namespace HierarchyHyperX {
@@ -36,6 +37,11 @@ RoutingFunction* RoutingFunctionFactory::createRoutingFunction(
 
   if (algorithm == "dimension_ordered") {
     return new HierarchyHyperX::DimOrderRoutingFunction(
+        _name, _parent, latency, _router, numVcs_, globalDimensionWidths_,
+        globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
+        concentration_, globalLinksPerRouter_, allVcs);
+  } else if (algorithm == "valiant") {
+    return new HierarchyHyperX::ValiantRoutingFunction(
         _name, _parent, latency, _router, numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_, allVcs);

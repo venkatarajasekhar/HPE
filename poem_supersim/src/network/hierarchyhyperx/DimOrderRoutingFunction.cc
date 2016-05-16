@@ -36,15 +36,38 @@ DimOrderRoutingFunction::~DimOrderRoutingFunction() {}
 
 void DimOrderRoutingFunction::processRequest(
     Flit* _flit, RoutingFunction::Response* _response) {
-  // ex: [1,...,m,1,...,n]
-  const std::vector<u32>& routerAddress = router_->getAddress();
   // ex: [c,1,...,m,1,...,n]
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
-  dbgprintf("Router address is %s \n",
-         strop::vecString<u32>(routerAddress).c_str());
+
   dbgprintf("Destination address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
+
+  // perform routing
+  std::unordered_set<u32> outputPorts = routing(destinationAddress);
+  assert(outputPorts.size() > 0);
+
+  // format the response
+  for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
+    u32 outputPort = *it;
+    if (allVcs_) {
+      // select all VCs in the output port
+      for (u32 vc = 0; vc < numVcs_; vc++) {
+        _response->add(outputPort, vc);
+      }
+    } else {
+      // use the current VC
+      _response->add(outputPort, _flit->getVc());
+    }
+  }
+}
+
+std::unordered_set<u32> DimOrderRoutingFunction::routing(
+     const std::vector<u32>* destinationAddress) {
+  // ex: [1,...,m,1,...,n]
+  const std::vector<u32>& routerAddress = router_->getAddress();
+  dbgprintf("Router address is %s \n",
+         strop::vecString<u32>(routerAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
   u32 globalDimensions = globalDimensionWidths_.size();
   u32 localDimensions = localDimensionWidths_.size();
@@ -201,21 +224,7 @@ void DimOrderRoutingFunction::processRequest(
       }
     }
   }
-
-  assert(outputPorts.size() > 0);
-  // format the response
-  for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
-    u32 outputPort = *it;
-    if (allVcs_) {
-      // select all VCs in the output port
-      for (u32 vc = 0; vc < numVcs_; vc++) {
-        _response->add(outputPort, vc);
-      }
-    } else {
-      // use the current VC
-      _response->add(outputPort, _flit->getVc());
-    }
-  }
+  return outputPorts;
 }
 
 }  // namespace HierarchyHyperX

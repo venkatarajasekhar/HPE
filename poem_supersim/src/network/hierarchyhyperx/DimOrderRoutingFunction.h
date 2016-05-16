@@ -31,8 +31,8 @@ class DimOrderRoutingFunction : public RoutingFunction {
  protected:
   void processRequest(
       Flit* _flit, RoutingFunction::Response* _response) override;
+  std::unordered_set<u32> routing(const std::vector<u32>* destinationAddress);
 
- private:
   Router* router_;
   u32 numVcs_;
   u32 numPorts_;
