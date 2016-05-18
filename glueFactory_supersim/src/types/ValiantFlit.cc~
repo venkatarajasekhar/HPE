@@ -1,0 +1,22 @@
+/*
+ * Copyright (c) 2016, Hewlett-Packard Laboratories, Qi Li
+ * See LICENSE file for details
+ */
+#include "types/ValiantFlit.h"
+
+#include <cassert>
+
+#include "types/Packet.h"
+
+ValiantFlit::ValiantFlit(u32 _id, bool _isHead, bool _isTail, Packet* _packet)
+  : Flit::Flit(_id, _isHead, _isTail, _packet), intermediateDone_(false) {}
+
+ValiantFlit::~ValiantFlit() {}
+
+bool ValiantFlit::getIntermediate() const {
+  return intermediateDone_;
+}
+
+void ValiantFlit::setIntermediate(bool _intermediate) {
+  intermediateDone_ = _intermediate;
+}

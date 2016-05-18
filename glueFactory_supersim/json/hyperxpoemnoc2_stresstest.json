@@ -1,0 +1,112 @@
+{
+  "simulator": {
+    "cycle_time": 813, // picoseconds
+    "print_progress": true,
+    "print_interval": 1.0  // seconds
+  },
+  "random": {
+    "seed": 12345678
+  },
+  "network": {
+    "topology": "hyperxpoemnoc2",
+    "num_vcs": 2,
+    "dimension_widths": [5, 5],
+    "dimension_weights": [1, 1],
+    "concentration": 2,
+    "noc_width": 5,
+    "noc_weight": 1,
+    "noc_concentration": 2,
+    "noc_channel": {
+      "latency": 1 // cycles
+    },
+    "internal_channel": {
+      "latency": 5 // cycles
+    },
+    "external_channel": {
+      "latency": 5 // cycles
+    },
+    "channel_log": {
+      "file": "channels.csv"
+    },
+    "interface": {
+      "type": "poem",
+      "crossbar_scheduler": {
+        "allocator": {
+          "type": "r_separable",
+          "slip_latch": true,
+          "resource_arbiter": {
+            "type": "comparing",
+            "greater": false
+          }
+        }
+      },
+      "init_credits": 14,
+      "crossbar": {
+        "latency": 1 // cycles
+      }
+    },
+    "router": {
+      "routing": {
+        "algorithm": "dimension_ordered",
+        "latency": 1, // cycles
+        "all_vcs": false
+      },
+      "input_queue_depth": 14,  // min is 14
+      "local_queue_depth": 6,  // min is 6
+      "output_queue_depth": 3,  // min is 3
+      "crossbar": {
+        "latency": 1 // cycles
+      },
+      "crossbar_scheduler": {
+        "allocator": {
+          "type": "r_separable",
+          "slip_latch": true,
+          "resource_arbiter": {
+            "type": "comparing",
+            "greater": false
+          }
+        }
+      },
+      "output_crossbar": {
+        "latency": 1 // cycles
+      },
+      "output_crossbar_scheduler": {
+        "allocator": {
+          "type": "r_separable",
+          "slip_latch": true,
+          "resource_arbiter": {
+            "type": "comparing",
+            "greater": false
+          }
+        }
+      }
+    }
+  },
+  "application": {
+    "type": "stress_test",
+    "max_injection_rate": 0.5,
+    "warmup_threshold": 0.99,
+    "blast_terminal": {
+      "num_messages": 500,
+      "min_message_size": 1,
+      "max_message_size": 1,
+      "max_packet_size": 1,
+      "warmup_interval": 200,  // delivered flits
+      "warmup_window": 15,
+      "warmup_attempts": 150,
+      "traffic_pattern": {
+        "type": "uniform_random"
+      }
+    },
+    "message_log": {
+      "file": "data.mpf.gz"
+    },
+    "rate_log": {
+      "file": "rates.csv"
+    }
+  },
+  "debug": [
+    "Application",
+    "Application.BlastTerminal_0"
+  ]
+}
