@@ -55,11 +55,7 @@ void DimOrderRoutingAlgorithm::processRequest(
     if (routerAddress.at(dim) != destinationAddress->at(dim+1)) {
       break;
     }
-    if (dimensionWidths_.at(dim) == 2) {
-      portBase += 1;
-    } else {
-      portBase += 2;
-    }
+    portBase += 2;
   }
 
   // test if already at destination router
@@ -71,49 +67,47 @@ void DimOrderRoutingAlgorithm::processRequest(
       _response->add(outputPort, vc);
     }
   } else {
-    u32 vcSet = _flit->getVc() % 2;
-
     // more router-to-router hops needed
     u32 src = routerAddress.at(dim);
     u32 dst = destinationAddress->at(dim + 1);
     assert(src != dst);
 
-    // in dimension with width of 2, there is only one port
+
+    // in torus topology, we can get to a destination in two directions,
+    //  this algorithm takes the shortest path, randomized tie breaker
+    u32 rightDelta = ((dst > src) ?
+                      (dst - src) :
+                      (dst + dimensionWidths_.at(dim) - src));
+    u32 leftDelta = ((src > dst) ?
+                     (src - dst) :
+                     (src + dimensionWidths_.at(dim) - dst));
+
+    // determine direction
     bool right;
-    if (dimensionWidths_.at(dim) == 2) {
+    if (rightDelta == leftDelta) {
+      right = gSim->rnd.nextBool();
+    } else if (rightDelta < leftDelta) {
       right = true;
     } else {
-      // in torus topology, we can get to a destination in two directions,
-      //  this algorithm takes the shortest path, randomized tie breaker
-      u32 rightDelta = ((dst > src) ?
-                        (dst - src) :
-                        (dst + dimensionWidths_.at(dim) - src));
-      u32 leftDelta = ((src > dst) ?
-                       (src - dst) :
-                       (src + dimensionWidths_.at(dim) - dst));
-
-      // determine direction
-      if (rightDelta == leftDelta) {
-        right = gSim->rnd.nextBool();
-      } else if (rightDelta < leftDelta) {
-        right = true;
-      } else {
-        right = false;
-      }
+      right = false;
     }
 
     // choose output port, figure out next router in this dimension
     u32 next;
+    bool crossDateline;
     if (right) {
       outputPort = portBase;
       next = (src + 1) % dimensionWidths_.at(dim);
+      crossDateline = next < src;
     } else {
       outputPort = portBase + 1;
       next = src == 0 ? dimensionWidths_.at(dim) - 1 : src - 1;
+      crossDateline = next > src;
     }
 
-    // the output port is now determined, now figure out which VC(s) to use
+    // the output port is now determined, now figure out which VC set to use
     assert(outputPort != inputPort_);  // this case is already checked
+    u32 vcSet = _flit->getVc() % 2;
 
     // reset to VC set 0 when switching dimensions
     //  this also occurs on an injection port
@@ -122,9 +116,8 @@ void DimOrderRoutingAlgorithm::processRequest(
     }
 
     // check dateline crossing
-    if (((src == 0) && (next == (dimensionWidths_.at(dim) - 1))) ||
-        ((next == 0) && (src == (dimensionWidths_.at(dim) - 1)))) {
-      assert(vcSet == 0);  // can only cross once
+    if (crossDateline) {
+      assert(vcSet == 0);  // only cross once per dim
       vcSet++;
     }
 

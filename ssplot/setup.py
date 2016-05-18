@@ -60,6 +60,6 @@ setup(
   license='BSD 3 Clause',
   url='http://github.com/nicmcd/ssplot',
   packages=['ssplot'],
-  scripts=['bin/sslqp', 'bin/ssllp'],
+  scripts=['bin/sslqp', 'bin/ssllp', 'bin/sslcp'],
   install_requires=['percentile >= 1.0.1'],
 )

@@ -32,6 +32,9 @@ Router::Router(
     : ::Router(_name, _parent, _address, _settings) {
   u32 inputQueueDepth = _settings["input_queue_depth"].asUInt();
   assert(inputQueueDepth > 0);
+  assert(_settings.isMember("vca_swa_wait") &&
+         _settings["vca_swa_wait"].isBool());
+  bool vcaSwaWait = _settings["vca_swa_wait"].asBool();
   u32 outputQueueDepth = _settings["output_queue_depth"].asUInt();
   assert(outputQueueDepth > 0);
 
@@ -57,8 +60,13 @@ Router::Router(
   inputQueues_.resize(numPorts_ * numVcs_, nullptr);
   for (u32 port = 0; port < numPorts_; port++) {
     for (u32 vc = 0; vc < numVcs_; vc++) {
+      u32 vcIdx = vcIndex(port, vc);
+
       // initialize the credit count in the CrossbarScheduler
-      crossbarScheduler_->initCreditCount(vcIndex(port, vc), outputQueueDepth);
+      crossbarScheduler_->initCreditCount(vcIdx, outputQueueDepth);
+
+      // initialize the credit count in the CongestionStatus
+      congestionStatus_->initCredits(vcIdx, inputQueueDepth);
 
       // create the name suffix
       std::string nameSuffix = "_" + std::to_string(port) + "_" +
@@ -68,18 +76,18 @@ Router::Router(
       std::string rfname = "RoutingAlgorithm" + nameSuffix;
       RoutingAlgorithm* rf = _routingAlgorithmFactory->createRoutingAlgorithm(
           rfname, this, this, port);
-      routingAlgorithms_.at(vcIndex(port, vc)) = rf;
+      routingAlgorithms_.at(vcIdx) = rf;
 
       // compute the client index (same for VC alloc, SW alloc, and Xbar)
-      u32 clientIndex = vcIndex(port, vc);
+      u32 clientIndex = vcIdx;
 
       // input queue
       std::string iqName = "InputQueue" + nameSuffix;
       InputQueue* iq = new InputQueue(
-          iqName, this, this, inputQueueDepth, port, numVcs_, vc, rf,
-          vcScheduler_, clientIndex, crossbarScheduler_, clientIndex, crossbar_,
-          clientIndex);
-      inputQueues_.at(vcIndex(port, vc)) = iq;
+          iqName, this, this, inputQueueDepth, port, numVcs_, vc, vcaSwaWait,
+          rf, vcScheduler_, clientIndex, crossbarScheduler_, clientIndex,
+          crossbar_, clientIndex);
+      inputQueues_.at(vcIdx) = iq;
 
       // register the input queue with VC and crossbar schedulers
       vcScheduler_->setClient(clientIndex, iq);
@@ -164,11 +172,13 @@ Router::~Router() {
 }
 
 void Router::setInputChannel(u32 _index, Channel* _channel) {
+  assert(inputChannels_.at(_index) == nullptr);
   inputChannels_.at(_index) = _channel;
   _channel->setSink(this, _index);
 }
 
 void Router::setOutputChannel(u32 _index, Channel* _channel) {
+  assert(outputChannels_.at(_index) == nullptr);
   outputChannels_.at(_index) = _channel;
   _channel->setSource(this, _index);
 }
@@ -183,6 +193,8 @@ void Router::receiveCredit(u32 _port, Credit* _credit) {
   while (_credit->more()) {
     u32 vc = _credit->getNum();
     outputCrossbarSchedulers_.at(_port)->incrementCreditCount(vc);
+    u32 vcIdx = vcIndex(_port, vc);
+    congestionStatus_->increment(vcIdx);
   }
   delete _credit;
 }
@@ -203,6 +215,7 @@ void Router::sendCredit(u32 _port, u32 _vc) {
 void Router::sendFlit(u32 _port, Flit* _flit) {
   assert(outputChannels_.at(_port)->getNextFlit() == nullptr);
   outputChannels_.at(_port)->setNextFlit(_flit);
+  congestionStatus_->decrement(vcIndex(_port, _flit->getVc()));
 }
 
 f64 Router::congestionStatus(u32 _vcIdx) const {

@@ -42,13 +42,13 @@ TEST(Grid, basic) {
   grid.set(0, 3, "Sex");
 
   grid.set(1, 0, "1");
-  grid.set(1, 1, "Nicholas George McDonald");
-  grid.set(1, 2, "31");
+  grid.set(1, 1, "Donald Duck");
+  grid.set(1, 2, "82");
   grid.set(1, 3, "Male");
 
   grid.set(2, 0, "2");
-  grid.set(2, 1, "Kara Lynn McDonald");
-  grid.set(2, 2, "29");
+  grid.set(2, 1, "Minnie Mouse");
+  grid.set(2, 2, "34");
   grid.set(2, 3, "Female");
 
   std::string text = grid.toString();

@@ -86,7 +86,7 @@ void Queue<T>::clear() {
 }
 
 template <typename T>
-size_t Queue<T>::size() const {
+u64 Queue<T>::size() const {
   return values_.size();
 }
 
