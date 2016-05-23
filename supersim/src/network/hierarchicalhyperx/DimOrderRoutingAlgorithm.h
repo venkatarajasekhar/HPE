@@ -35,8 +35,7 @@ class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
-                          u32 _concentration, u32 _globalLinksPerRouter,
-                          bool _allVcs);
+                          u32 _concentration, u32 _globalLinksPerRouter);
   ~DimOrderRoutingAlgorithm();
 
  protected:
@@ -47,13 +46,13 @@ class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
   // Router* router_;
   u32 numVcs_;
   u32 numPorts_;
-  const std::vector<u32> globalDimensionWidths_;
-  const std::vector<u32> globalDimensionWeights_;
-  const std::vector<u32> localDimensionWidths_;
-  const std::vector<u32> localDimensionWeights_;
+  const std::vector<u32> globalDimWidths_;
+  const std::vector<u32> globalDimWeights_;
+  const std::vector<u32> localDimWidths_;
+  const std::vector<u32> localDimWeights_;
   u32 concentration_;
   u32 globalLinksPerRouter_;
-  bool allVcs_;
+  u32 globalTraversalCount_;
 };
 
 }  // namespace HierarchicalHyperX

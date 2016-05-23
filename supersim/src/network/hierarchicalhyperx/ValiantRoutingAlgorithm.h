@@ -25,13 +25,13 @@ class ValiantRoutingAlgorithm : public DimOrderRoutingAlgorithm {
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
-                          u32 _concentration, u32 _globalLinksPerRouter,
-                          bool _allVcs);
+                          u32 _concentration, u32 _globalLinksPerRouter);
   ~ValiantRoutingAlgorithm();
 
  protected:
   void processRequest(
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
+  bool intermediateDone;
 };
 
 }  // namespace HierarchicalHyperX

@@ -31,14 +31,16 @@ DimOrderRoutingAlgorithm::DimOrderRoutingAlgorithm(
     const std::vector<u32>& _globalDimensionWeights,
     const std::vector<u32>& _localDimensionWidths,
     const std::vector<u32>& _localDimensionWeights,
-    u32 _concentration, u32 _globalLinksPerRouter, bool _allVcs)
+    u32 _concentration, u32 _globalLinksPerRouter)
     : RoutingAlgorithm(_name, _parent, _router, _latency),
-      numVcs_(_numVcs), globalDimensionWidths_(_globalDimensionWidths),
-      globalDimensionWeights_(_globalDimensionWeights),
-      localDimensionWidths_(_localDimensionWidths),
-      localDimensionWeights_(_localDimensionWeights),
+      numVcs_(_numVcs), globalDimWidths_(_globalDimensionWidths),
+      globalDimWeights_(_globalDimensionWeights),
+      localDimWidths_(_localDimensionWidths),
+      localDimWeights_(_localDimensionWeights),
       concentration_(_concentration),
-      globalLinksPerRouter_(_globalLinksPerRouter), allVcs_(_allVcs) {
+      globalLinksPerRouter_(_globalLinksPerRouter) {
+  globalTraversalCount_ = 0;
+  assert(numVcs_ >= globalDimWidths_.size() + 1);
 }
 
 DimOrderRoutingAlgorithm::~DimOrderRoutingAlgorithm() {}
@@ -54,35 +56,33 @@ void DimOrderRoutingAlgorithm::processRequest(
 
   // perform routing
   std::unordered_set<u32> outputPorts = routing(destinationAddress);
-  assert(outputPorts.size() > 0);
+  assert(outputPorts.size() == 1);
+
+  // figure out which VC set to use
+  u32 vcSet = globalTraversalCount_;
 
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
     u32 outputPort = *it;
-    if (allVcs_) {
-      // select all VCs in the output port
-      for (u32 vc = 0; vc < numVcs_; vc++) {
-        _response->add(outputPort, vc);
-      }
-    } else {
-      // use the current VC
-      _response->add(outputPort, _flit->getVc());
+    // select VCs in the corresponding set
+    for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
+      _response->add(outputPort, vc);
     }
   }
 }
 
 std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
-     const std::vector<u32>* destinationAddress) {
+  const std::vector<u32>* destinationAddress) {
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
   dbgprintf("Router address is %s \n",
          strop::vecString<u32>(routerAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
-  u32 globalDimensions = globalDimensionWidths_.size();
-  u32 localDimensions = localDimensionWidths_.size();
+  u32 globalDimensions = globalDimWidths_.size();
+  u32 localDimensions = localDimWidths_.size();
   u32 numRoutersPerGlobalRouter = 1;
   for (u32 tmp = 0; tmp < localDimensions; tmp++) {
-    numRoutersPerGlobalRouter *= localDimensionWidths_.at(tmp);
+    numRoutersPerGlobalRouter *= localDimWidths_.at(tmp);
   }
 
   // determine if already at destination virtual global router
@@ -93,8 +93,8 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
         != destinationAddress->at(localDimensions + globalDim + 1)) {
       break;
     }
-    globalPortBase += ((globalDimensionWidths_.at(globalDim) - 1)
-                 * globalDimensionWeights_.at(globalDim));
+    globalPortBase += ((globalDimWidths_.at(globalDim) - 1)
+                 * globalDimWeights_.at(globalDim));
   }
 
   // first perform routing at the global level
@@ -107,12 +107,12 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
     u32 src = routerAddress.at(localDimensions + globalDim);
     u32 dst = destinationAddress->at(localDimensions + globalDim + 1);
     if (dst < src) {
-      dst += globalDimensionWidths_.at(globalDim);
+      dst += globalDimWidths_.at(globalDim);
     }
-    u32 offset = (dst - src - 1) * globalDimensionWeights_.at(globalDim);
+    u32 offset = (dst - src - 1) * globalDimWeights_.at(globalDim);
 
     // add all ports where the two global routers are connecting
-    for (u32 weight = 0; weight < globalDimensionWeights_.at(globalDim);
+    for (u32 weight = 0; weight < globalDimWeights_.at(globalDim);
          weight++) {
       u32 globalPort = globalPortBase + offset + weight;
       bool res = globalOutputPorts.insert(globalPort).second;
@@ -126,8 +126,8 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
     bool hasGlobalLinkToDst = false;
     u32 portBase = concentration_;
     for (u32 i = 0; i < localDimensions; i++) {
-      portBase += ((localDimensionWidths_.at(i) - 1) *
-                     localDimensionWeights_.at(i));
+      portBase += ((localDimWidths_.at(i) - 1) *
+                     localDimWeights_.at(i));
     }
 
     for (auto itr = globalOutputPorts.begin();
@@ -135,15 +135,15 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
       std::vector<u32> localRouter(localDimensions);
       u32 product = 1;
       for (u32 tmp = 0; tmp < localDimensions - 1; tmp++) {
-        product *= localDimensionWidths_.at(tmp);
+        product *= localDimWidths_.at(tmp);
       }
       u32 globalOutputPort = *itr;
       for (s32 localDim = localDimensions - 1; localDim >= 0; localDim--) {
         localRouter.at(localDim) = (globalOutputPort / product)
-          % localDimensionWidths_.at(localDim);
+          % localDimWidths_.at(localDim);
         globalOutputPort %= product;
         if (localDim != 0) {
-          product /= localDimensionWidths_.at(localDim - 1);
+          product /= localDimWidths_.at(localDim - 1);
         }
       }
       assert(localRouter.size() == localDimensions);
@@ -176,18 +176,18 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
           if (routerAddress.at(localDim) != itr->at(localDim)) {
             break;
           }
-        portBase += ((localDimensionWidths_.at(localDim) - 1)
-                     * localDimensionWeights_.at(localDim));
+        portBase += ((localDimWidths_.at(localDim) - 1)
+                     * localDimWeights_.at(localDim));
         }
         // more local router-to-router hops needed
         u32 src = routerAddress.at(localDim);
         u32 dst = itr->at(localDim);
         if (dst < src) {
-          dst += localDimensionWidths_.at(localDim);
+          dst += localDimWidths_.at(localDim);
         }
-        u32 offset = (dst - src - 1) * localDimensionWeights_.at(localDim);
+        u32 offset = (dst - src - 1) * localDimWeights_.at(localDim);
         // add all ports where the two routers are connecting
-        for (u32 weight = 0; weight < localDimensionWeights_.at(localDim);
+        for (u32 weight = 0; weight < localDimWeights_.at(localDim);
              weight++) {
           bool res = outputPorts.insert(portBase + offset + weight).second;
           (void)res;
@@ -196,6 +196,9 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
           // assert(res);
         }
       }
+    } else {
+      // update the globalTrasversalCount for VC set selection
+      globalTraversalCount_++;
     }
   } else {
     // if at the same global virtual router
@@ -208,8 +211,8 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
       if (routerAddress.at(localDim) != destinationAddress->at(localDim+1)) {
         break;
       }
-      portBase += ((localDimensionWidths_.at(localDim) - 1)
-                   * localDimensionWeights_.at(localDim));
+      portBase += ((localDimWidths_.at(localDim) - 1)
+                   * localDimWeights_.at(localDim));
     }
     // test if already at destination local router
     if (localDim == localDimensions) {
@@ -221,11 +224,11 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
       u32 src = routerAddress.at(localDim);
       u32 dst = destinationAddress->at(localDim + 1);
       if (dst < src) {
-        dst += localDimensionWidths_.at(localDim);
+        dst += localDimWidths_.at(localDim);
       }
-      u32 offset = (dst - src - 1) * localDimensionWeights_.at(localDim);
+      u32 offset = (dst - src - 1) * localDimWeights_.at(localDim);
       // add all ports where the two routers are connecting
-      for (u32 weight = 0; weight < localDimensionWeights_.at(localDim);
+      for (u32 weight = 0; weight < localDimWeights_.at(localDim);
            weight++) {
         bool res = outputPorts.insert(portBase + offset + weight).second;
         (void)res;

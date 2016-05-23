@@ -75,7 +75,7 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
      const std::vector<u32>* destinationAddress) {
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
-  printf("Router address is %s \n",
+  dbgprintf("Router address is %s \n",
          strop::vecString<u32>(routerAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
   u32 globalDimensions = globalDimensionWidths_.size();

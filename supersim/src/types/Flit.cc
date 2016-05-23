@@ -10,8 +10,7 @@
 
 Flit::Flit(u32 _id, bool _isHead, bool _isTail, Packet* _packet)
     : id_(_id), head_(_isHead), tail_(_isTail), packet_(_packet),
-      sendTime_(U64_MAX), receiveTime_(U64_MAX),
-      intermediateDone_(false) {}
+      sendTime_(U64_MAX), receiveTime_(U64_MAX) {}
 
 Flit::~Flit() {}
 
@@ -57,20 +56,4 @@ void Flit::setReceiveTime(u64 _time) {
 u64 Flit::getReceiveTime() const {
   assert(receiveTime_ != U64_MAX);
   return receiveTime_;
-}
-
-bool Flit::getIntermediate() const {
-  return intermediateDone_;
-}
-
-void Flit::setIntermediate(bool _intermediate) {
-  intermediateDone_ = _intermediate;
-}
-
-const std::vector<u32>* Flit::getIntermediateDst() const {
-  return intermediateDst;
-}
-
-void Flit::setIntermediateDst(const std::vector<u32>* _address) {
-  intermediateDst = _address;
 }

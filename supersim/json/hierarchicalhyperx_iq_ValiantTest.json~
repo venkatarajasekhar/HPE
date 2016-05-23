@@ -28,7 +28,7 @@
       "file": "/dev/null"  // "channels.csv"
     },
     "routing": {
-      "algorithm": "valiant",
+      "algorithm": "dimension_order",
       "latency": 1
     },
     "interface": {
@@ -92,7 +92,7 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.1,
+    "max_injection_rate": 0.6,
     "warmup_threshold": 0.99,
     "blast_terminal": {
       "num_messages": 100,
@@ -101,7 +101,7 @@
       "max_packet_size": 1,
       "warmup_interval": 200,  // delivered flits
       "warmup_window": 15,
-      "warmup_attempts": 30,
+      "warmup_attempts": 10,
       "traffic_pattern": {
         "type": "bit_complement",
         "send_to_self": false

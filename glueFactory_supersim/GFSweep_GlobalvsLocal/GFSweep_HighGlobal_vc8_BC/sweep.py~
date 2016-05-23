@@ -96,7 +96,7 @@ def main(args):
   # create a task to make a load latency graph
   loadlat_file = os.path.join(args.rundir,
                               'load_latency_{0:02d}.png'.format(args.queue))
-  loadlat_cmd = ('ssllp --row Packet --title "QueueSize={0}" '
+  loadlat_cmd = ('ssllp --row Packet --ymax 500000 --title "QueueSize={0}" '
                  '{1} {2} {3} {4}').format(args.queue, loadlat_file, sweepStart,
                                            sweepStop+1, sweepStep)
   agg_files = []

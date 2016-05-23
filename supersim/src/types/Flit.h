@@ -28,12 +28,6 @@ class Flit {
   void setReceiveTime(u64 time);
   u64 getReceiveTime() const;
 
-  // for valiant routing only
-  bool getIntermediate() const;
-  void setIntermediate(bool _intermediate);
-  const std::vector<u32>* getIntermediateDst() const;
-  void setIntermediateDst(const std::vector<u32>* _address);
-
  private:
   u32 id_;
   bool head_;
@@ -43,9 +37,6 @@ class Flit {
 
   u64 sendTime_;
   u64 receiveTime_;
-  // for valiant routing only
-  bool intermediateDone_;
-  const std::vector<u32>* intermediateDst;
 };
 
 #endif  // TYPES_FLIT_H_

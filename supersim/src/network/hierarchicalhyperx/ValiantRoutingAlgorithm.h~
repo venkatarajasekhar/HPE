@@ -11,7 +11,7 @@
 #include <vector>
 
 #include "event/Component.h"
-#include "network/RoutingFunction.h"
+#include "network/RoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/DimOrderRoutingAlgorithm.h"
 #include "router/Router.h"
 
@@ -25,13 +25,14 @@ class ValiantRoutingAlgorithm : public DimOrderRoutingAlgorithm {
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
-                          u32 _concentration, u32 _globalLinksPerRouter,
-                          bool _allVcs);
+                          u32 _concentration, u32 _globalLinksPerRouter);
   ~ValiantRoutingAlgorithm();
 
  protected:
   void processRequest(
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
+  bool intermediateDone;
+  u32 globalTraversalCount_;
 };
 
 }  // namespace HierarchicalHyperX

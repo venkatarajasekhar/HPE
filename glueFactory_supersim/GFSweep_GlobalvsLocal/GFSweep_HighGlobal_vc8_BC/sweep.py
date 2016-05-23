@@ -45,9 +45,9 @@ def main(args):
     runId = '{0:02d}_{1}'.format(args.queue, load)
 
     # create file names
-    supersim_bin = os.path.join(args.ssenv, 'poem_supersim', 'bin', 'supersim')
+    supersim_bin = os.path.join(args.ssenv, 'glueFactory_supersim', 'bin', 'supersim')
     sslatency_bin = os.path.join(args.ssenv, 'sslatency', 'bin', 'sslatency')
-    settings_json = os.path.join(args.ssenv, 'poem_supersim', 'json',
+    settings_json = os.path.join(args.ssenv, 'glueFactory_supersim', 'json',
                                  'hierarchyhyperx_iq_GlueFactory1.json')
     simout_log = os.path.join(args.rundir, 'simout_{0}.log'.format(runId))
     messages_mpf = os.path.join(args.rundir, 'messages_{0}.mpf'.format(runId))
@@ -96,7 +96,7 @@ def main(args):
   # create a task to make a load latency graph
   loadlat_file = os.path.join(args.rundir,
                               'load_latency_{0:02d}.png'.format(args.queue))
-  loadlat_cmd = ('ssllp --row Packet --ymax 60000 --title "QueueSize={0}" '
+  loadlat_cmd = ('ssllp --row Packet --ymax 500000 --title "QueueSize={0}" '
                  '{1} {2} {3} {4}').format(args.queue, loadlat_file, sweepStart,
                                            sweepStop+1, sweepStep)
   agg_files = []

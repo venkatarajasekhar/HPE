@@ -49,7 +49,7 @@
     "router": {
       "architecture": "input_queued",
       "routing": {
-        "algorithm": "valiant",
+        "algorithm": "dimension_ordered",
         "latency": 1, // cycles
         "all_vcs": true
       },

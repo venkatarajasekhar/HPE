@@ -19,6 +19,7 @@
 
 #include "network/hierarchicalhyperx/DimOrderRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/MinAdaptiveRoutingAlgorithm.h"
 #include "network/RoutingAlgorithm.h"
 
 namespace HierarchicalHyperX {
@@ -47,13 +48,18 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
   u32 latency = settings_["latency"].asUInt();
   bool allVcs = settings_["all_vcs"].asBool();
 
-  if (algorithm == "dimension_ordered") {
+  if (algorithm == "dimension_order") {
     return new HierarchicalHyperX::DimOrderRoutingAlgorithm(
         _name, _parent, latency, _router, numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_, allVcs);
+        concentration_, globalLinksPerRouter_);
   } else if (algorithm == "valiant") {
     return new HierarchicalHyperX::ValiantRoutingAlgorithm(
+        _name, _parent, latency, _router,  numVcs_, globalDimensionWidths_,
+        globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
+        concentration_, globalLinksPerRouter_, allVcs);
+  } else if (algorithm == "min_adaptive") {
+    return new HierarchicalHyperX::MinAdaptiveRoutingAlgorithm(
         _name, _parent, latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_, allVcs);
