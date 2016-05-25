@@ -9,11 +9,11 @@
   },
   "network": {
     "topology": "hierarchyhyperx",
-    "num_vcs": 1,
+    "num_vcs": 8,
     "hierarchy": 2,
-    "global_dimension_widths": [6, 2],
+    "global_dimension_widths": [4, 2],
     "global_dimension_weights": [1, 1],
-    "local_dimension_widths": [3, 2],
+    "local_dimension_widths": [2, 2],
     "local_dimension_weights": [1, 1],
     "global_links_per_router": 1,
     "concentration": 1,
@@ -41,7 +41,7 @@
           }
         }
       },
-      "init_credits": 160,
+      "init_credits": 120,
       "crossbar": {
         "latency": 1 // cycles
       }
@@ -53,7 +53,7 @@
         "latency": 1, // cycles
         "all_vcs": true
       },
-      "input_queue_depth": 160,
+      "input_queue_depth": 120,
       "crossbar": {
         "latency": 1 // cycles
       },
@@ -61,7 +61,7 @@
         "allocator": {
           "type": "rc_separable",
           "slip_latch": true,
-          "iterations": 2,
+          "iterations": 1,
           "resource_arbiter": {
             "type": "comparing",
             "greater": false
@@ -85,16 +85,16 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.5,
+    "max_injection_rate": 0.1,
     "warmup_threshold": 0.99,
     "blast_terminal": {
       "num_messages": 100,
       "min_message_size": 1,
-      "max_message_size": 64,
-      "max_packet_size": 16,
+      "max_message_size": 1,
+      "max_packet_size": 1,
       "warmup_interval": 200,  // delivered flits
       "warmup_window": 15,
-      "warmup_attempts": 20,
+      "warmup_attempts": 30,
       "traffic_pattern": {
         "type": "uniform_random"
       }

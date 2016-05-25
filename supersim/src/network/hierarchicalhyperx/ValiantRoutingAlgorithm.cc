@@ -25,7 +25,6 @@ ValiantRoutingAlgorithm::ValiantRoutingAlgorithm(
     _latency, _router, _numVcs, _globalDimensionWidths,
     _globalDimensionWeights, _localDimensionWidths, _localDimensionWeights,
     _concentration, _globalLinksPerRouter) {
-  intermediateDone = false;
   assert(numVcs_ >= 2 * globalDimWidths_.size() + 2);
 }
 
@@ -68,39 +67,60 @@ void ValiantRoutingAlgorithm::processRequest(
   const std::vector<u32>* intermediateAddress =
       reinterpret_cast<const std::vector<u32>*>(packet->getRoutingExtension());
 
-  dbgprintf("Router address is %s \n",
+  dbgprintf("VAL:Router address is %s \n",
          strop::vecString<u32>(routerAddress).c_str());
-  dbgprintf("Destination address is %s \n",
+  dbgprintf("VAL: final dst address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
   dbgprintf("Intermediate address is %s \n",
          strop::vecString<u32>(*intermediateAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
   assert(routerAddress.size() == intermediateAddress->size() - 1);
 
-  // update intermediate info for Valiant
-  const std::vector<u32> intermediateRouter(intermediateAddress->begin() + 1,
-                                            intermediateAddress->end());
-  if (routerAddress == intermediateRouter) {
-    intermediateDone = true;
-  }
-  std::unordered_set<u32> outputPorts;
-  if (intermediateDone == false) {
-    outputPorts = DimOrderRoutingAlgorithm::routing(intermediateAddress);
-  } else {
-    // printf("set to true");
-    outputPorts = DimOrderRoutingAlgorithm::routing(destinationAddress);
-  }
-
-  assert(outputPorts.size() > 0);
-  // figure out which VC set to use
-  u32 vcSet = globalTraversalCount_;
-  // format the response
-  for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
-    u32 outputPort = *it;
-    // select VCs in the corresponding set
-    for (u32 vc = vcSet; vc < numVcs_; vc += 2 * globalDimWidths_.size() + 2) {
+  // if at destination
+  if (std::equal(routerAddress.begin(), routerAddress.end(),
+                 destinationAddress->begin() + 1)) {
+    u32 outputPort = destinationAddress->at(0);
+    // on ejection, any dateline VcSet is ok within any stage VcSet
+    for (u32 vc = 0; vc < numVcs_; vc++) {
       _response->add(outputPort, vc);
     }
+    assert(_response->size() > 0);
+    // delete the routing extension
+    delete intermediateAddress;
+    packet->setRoutingExtension(nullptr);
+  } else {
+    // update intermediate info for Valiant
+    const std::vector<u32> intermediateRouter(intermediateAddress->begin() +
+      localDimWidths_.size() + 1, intermediateAddress->end());
+    if (std::equal(routerAddress.begin() + localDimWidths_.size(),
+                   routerAddress.end(), intermediateRouter.begin())) {
+      _flit->setIntermediate(true);
+    }
+    std::unordered_set<u32> outputPorts;
+    // first stage of valiant
+    if (_flit->getIntermediateDone() == false) {
+      outputPorts = DimOrderRoutingAlgorithm::routing(
+                    _flit, intermediateAddress);
+      assert(_flit->getGlobalHopCount() < globalDimWidths_.size() + 1);
+     } else {
+      outputPorts = DimOrderRoutingAlgorithm::routing(
+                    _flit, destinationAddress);
+     }
+
+    assert(outputPorts.size() > 0);
+    // figure out which VC set to use
+    u32 vcSet = _flit->getGlobalHopCount();
+    dbgprintf("using vcset %u \n", vcSet);
+    // format the response
+    for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
+      u32 outputPort = *it;
+      // select VCs in the corresponding set
+      for (u32 vc = vcSet; vc < numVcs_;
+           vc += 2 * globalDimWidths_.size() + 2) {
+        _response->add(outputPort, vc);
+      }
+    }
+    assert(_response->size() > 0);
   }
 }
 

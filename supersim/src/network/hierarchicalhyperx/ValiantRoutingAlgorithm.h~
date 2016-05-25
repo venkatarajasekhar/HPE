@@ -32,7 +32,6 @@ class ValiantRoutingAlgorithm : public DimOrderRoutingAlgorithm {
   void processRequest(
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
   bool intermediateDone;
-  u32 globalTraversalCount_;
 };
 
 }  // namespace HierarchicalHyperX

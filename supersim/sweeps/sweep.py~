@@ -35,7 +35,7 @@ def main(args):
   # sweep params
   sweepStart = 1
   sweepStop = 100
-  sweepStep = 9
+  sweepStep = 10
   loads = ['{0:.02f}'.format(x/100)
            for x in range(sweepStart, sweepStop+1, sweepStep)]
 
@@ -45,10 +45,10 @@ def main(args):
     runId = '{0:02d}_{1}'.format(args.queue, load)
 
     # create file names
-    supersim_bin = os.path.join(args.ssenv, 'poem_supersim', 'bin', 'supersim')
+    supersim_bin = os.path.join(args.ssenv, 'supersim', 'bin', 'supersim')
     sslatency_bin = os.path.join(args.ssenv, 'sslatency', 'bin', 'sslatency')
-    settings_json = os.path.join(args.ssenv, 'poem_supersim', 'json',
-                                 'hierarchyhyperx_iq_GlueFactory1.json')
+    settings_json = os.path.join(args.ssenv, 'supersim', 'json',
+                                 'hierarchicalhyperx_iq_stresstest.json')
     simout_log = os.path.join(args.rundir, 'simout_{0}.log'.format(runId))
     messages_mpf = os.path.join(args.rundir, 'messages_{0}.mpf'.format(runId))
     rates_csv = os.path.join(args.rundir, 'rates_{0}.csv'.format(runId))

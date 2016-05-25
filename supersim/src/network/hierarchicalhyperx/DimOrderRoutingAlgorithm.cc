@@ -39,7 +39,6 @@ DimOrderRoutingAlgorithm::DimOrderRoutingAlgorithm(
       localDimWeights_(_localDimensionWeights),
       concentration_(_concentration),
       globalLinksPerRouter_(_globalLinksPerRouter) {
-  globalTraversalCount_ = 0;
   assert(numVcs_ >= globalDimWidths_.size() + 1);
 }
 
@@ -51,32 +50,31 @@ void DimOrderRoutingAlgorithm::processRequest(
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
 
-  dbgprintf("Destination address is %s \n",
-         strop::vecString<u32>(*destinationAddress).c_str());
-
   // perform routing
-  std::unordered_set<u32> outputPorts = routing(destinationAddress);
+  std::unordered_set<u32> outputPorts = routing(_flit, destinationAddress);
   assert(outputPorts.size() == 1);
 
   // figure out which VC set to use
-  u32 vcSet = globalTraversalCount_;
-
+  u32 vcSet = _flit->getGlobalHopCount();
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
     u32 outputPort = *it;
     // select VCs in the corresponding set
     for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
+      // for (u32 vc = 0; vc < numVcs_; vc += 1) {
       _response->add(outputPort, vc);
     }
   }
 }
 
-std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
+std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
   const std::vector<u32>* destinationAddress) {
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
-  dbgprintf("Router address is %s \n",
+  dbgprintf("Dim: Router address is %s \n",
          strop::vecString<u32>(routerAddress).c_str());
+  dbgprintf("Dim: Destination address is %s \n",
+         strop::vecString<u32>(*destinationAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
   u32 globalDimensions = globalDimWidths_.size();
   u32 localDimensions = localDimWidths_.size();
@@ -197,8 +195,10 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(
         }
       }
     } else {
-      // update the globalTrasversalCount for VC set selection
-      globalTraversalCount_++;
+      // router has global link to dst
+      // update the globalHopCount for VC set selection
+      _flit->incrementGlobalHopCount();
+      _flit->recordHop(routerAddress);
     }
   } else {
     // if at the same global virtual router

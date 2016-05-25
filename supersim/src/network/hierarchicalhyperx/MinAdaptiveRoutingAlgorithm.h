@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NETWORK_HIERARCHICALHYPERX_DIMORDERROUTINGALGORITHM_H_
-#define NETWORK_HIERARCHICALHYPERX_DIMORDERROUTINGALGORITHM_H_
+#ifndef NETWORK_HIERARCHICALHYPERX_MINADAPTIVEROUTINGALGORITHM_H_
+#define NETWORK_HIERARCHICALHYPERX_MINADAPTIVEROUTINGALGORITHM_H_
 
 #include <prim/prim.h>
 
@@ -27,21 +27,35 @@
 
 namespace HierarchicalHyperX {
 
-class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
+class MinAdaptiveRoutingAlgorithm : public RoutingAlgorithm {
  public:
-  DimOrderRoutingAlgorithm(const std::string& _name, const Component* _parent,
+  MinAdaptiveRoutingAlgorithm(const std::string& _name,
+                          const Component* _parent,
                           u64 _latency, Router* _router, u32 _numVcs,
                           const std::vector<u32>& _globalDimensionWidths,
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
                           u32 _concentration, u32 _globalLinksPerRouter);
-  ~DimOrderRoutingAlgorithm();
+  ~MinAdaptiveRoutingAlgorithm();
 
  protected:
   void processRequest(
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
-  std::unordered_set<u32> routing(const std::vector<u32>* destinationAddress);
+
+  std::unordered_set<u32> routing(
+      Flit* _flit, const std::vector<u32>* destinationAddress);
+
+  u32 getPortBase();
+
+  void globalPortToLocalAddress(u32 globalPort,
+      std::vector<u32>* localAddress, u32* localPortWithoutBase);
+
+  u32 findHighestPort(std::unordered_map<u32, f64> portAvailability);
+
+  void findPortAvailability(std::vector<u32> diffDims,
+    std::unordered_map<u32, f64>* portAvailability,
+    std::vector<u32>* destinationAddress, Flit* _flit);
 
   // Router* router_;
   u32 numVcs_;
@@ -56,4 +70,4 @@ class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
 
 }  // namespace HierarchicalHyperX
 
-#endif  // NETWORK_HIERARCHICALHYPERX_DIMORDERROUTINGALGORITHM_H_
+#endif  // NETWORK_HIERARCHICALHYPERX_MINADAPTIVEROUTINGALGORITHM_H_

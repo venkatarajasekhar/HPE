@@ -85,7 +85,7 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.4,
+    "max_injection_rate": 0.1,
     "warmup_threshold": 0.99,
     "blast_terminal": {
       "num_messages": 100,
@@ -96,7 +96,7 @@
       "warmup_window": 15,
       "warmup_attempts": 30,
       "traffic_pattern": {
-        "type": "bit_complement"
+        "type": "uniform_random"
       }
     },
     "message_log": {

@@ -41,7 +41,8 @@ class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
  protected:
   void processRequest(
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
-  std::unordered_set<u32> routing(const std::vector<u32>* destinationAddress);
+  std::unordered_set<u32> routing(
+      Flit* _flit, const std::vector<u32>* destinationAddress);
 
   // Router* router_;
   u32 numVcs_;
@@ -52,7 +53,6 @@ class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
   const std::vector<u32> localDimWeights_;
   u32 concentration_;
   u32 globalLinksPerRouter_;
-  u32 globalTraversalCount_;
 };
 
 }  // namespace HierarchicalHyperX
