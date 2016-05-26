@@ -103,7 +103,7 @@
       "warmup_window": 15,
       "warmup_attempts": 30,
       "traffic_pattern": {
-        "type": "uniform_random",
+        "type": "bit_complement",
         "send_to_self": false
       }
     },

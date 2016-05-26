@@ -3,6 +3,7 @@
  * See LICENSE file for details
  */
 #include "types/Flit.h"
+#include <strop/strop.h>
 
 #include <cassert>
 
@@ -71,7 +72,10 @@ void Flit::recordHop(std::vector<u32> hop) {
   hops.push_back(hop);
 }
 
-std::vector<std::vector<u32> > Flit::getHops() {
+std::vector<std::vector<u32> > Flit::getHops() const {
+  // for (auto itr = hops.begin(); itr != hops.end(); itr++) {
+  //  printf("flit path is %s \n", strop::vecString<u32>(*itr).c_str());
+  // }
   return hops;
 }
 

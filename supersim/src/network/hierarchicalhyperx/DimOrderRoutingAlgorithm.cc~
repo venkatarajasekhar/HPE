@@ -56,11 +56,18 @@ void DimOrderRoutingAlgorithm::processRequest(
 
   // figure out which VC set to use
   u32 vcSet = _flit->getGlobalHopCount();
+
+  // for (auto itr = _flit->getHops().begin(); itr != _flit->getHops().end();
+  //     itr++) {
+  //  printf("Router path is %s \n",
+  //       strop::vecString<u32>(*itr).c_str());
+  // }
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
     u32 outputPort = *it;
     // select VCs in the corresponding set
     for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
+      // for (u32 vc = 0; vc < numVcs_; vc += 1) {
       _response->add(outputPort, vc);
     }
   }

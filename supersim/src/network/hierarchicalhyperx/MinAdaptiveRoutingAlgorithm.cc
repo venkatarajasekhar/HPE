@@ -47,6 +47,7 @@ MinAdaptiveRoutingAlgorithm::~MinAdaptiveRoutingAlgorithm() {}
 
 void MinAdaptiveRoutingAlgorithm::processRequest(
     Flit* _flit, RoutingAlgorithm::Response* _response) {
+  // printf("\n \n");
   // ex: [c,1,...,m,1,...,n]
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
@@ -60,6 +61,12 @@ void MinAdaptiveRoutingAlgorithm::processRequest(
 
   // figure out which VC set to use
   u32 vcSet = _flit->getGlobalHopCount();
+  if (*outputPorts.begin() >= getPortBase()) {
+    _flit->incrementGlobalHopCount();
+    _flit->recordHop(router_->getAddress());
+  }
+  printf("vcset = %u\n", vcSet);
+  printf("gethop size = %li\n", _flit->getHops().size());
 
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
@@ -69,6 +76,8 @@ void MinAdaptiveRoutingAlgorithm::processRequest(
       _response->add(outputPort, vc);
     }
   }
+  assert(_response->size() > 0);
+  printf("end \n");
 }
 
 std::unordered_set<u32> MinAdaptiveRoutingAlgorithm::routing(Flit* _flit,
@@ -85,106 +94,112 @@ std::unordered_set<u32> MinAdaptiveRoutingAlgorithm::routing(Flit* _flit,
     numRoutersPerGlobalRouter *= localDimWidths_.at(tmp);
   }
 
-  std::vector<u32> diffGlobalDims;
-  bool atGlobalDst = true;
   // determine if already at destination virtual global router
-  for (u32 globalDim = 0; globalDim < globalDimensions; globalDim++) {
+  u32 globalDim;
+  u32 globalPortBase = 0;
+  for (globalDim = 0; globalDim < globalDimensions; globalDim++) {
     if (routerAddress.at(localDimensions + globalDim)
         != destinationAddress->at(localDimensions + globalDim + 1)) {
-      diffGlobalDims.push_back(globalDim);
-      atGlobalDst = false;
+      break;
     }
+    globalPortBase += ((globalDimWidths_.at(globalDim) - 1)
+                 * globalDimWeights_.at(globalDim));
   }
-
   // first perform routing at the global level
+  std::unordered_set<u32> globalOutputPorts;
   std::unordered_set<u32> outputPorts;
 
   // if at different global router
-  if (atGlobalDst == false) {
-    std::unordered_map< u32, f64 > globalPortAvailability;
+  if (globalDim != globalDimensions) {
     // find the all ports of the virtual global router
-    for (auto itr = diffGlobalDims.begin(); itr != diffGlobalDims.end();
-         itr++) {
-      std::unordered_set<u32> globalOutputPorts;
-      u32 src = routerAddress.at(localDimensions + *itr);
-      u32 dst = destinationAddress->at(localDimensions + *itr + 1);
-      if (dst < src) {
-        dst += globalDimWidths_.at(*itr);
-      }
-      u32 globalPortBase = 0;
-      for (u32 globalDim = 0; globalDim < *itr; globalDim++) {
-        globalPortBase += ((globalDimWidths_.at(globalDim) - 1)
-                          * globalDimWeights_.at(globalDim));
-      }
-      u32 offset = (dst - src - 1) * globalDimWeights_.at(*itr);
-      // add all ports where the two global routers are connecting
-      for (u32 weight = 0; weight < globalDimWeights_.at(*itr); weight++) {
-        u32 globalPort = globalPortBase + offset + weight;
-        bool res = globalOutputPorts.insert(globalPort).second;
+    u32 src = routerAddress.at(localDimensions + globalDim);
+    u32 dst = destinationAddress->at(localDimensions + globalDim + 1);
+    if (dst < src) {
+      dst += globalDimWidths_.at(globalDim);
+    }
+    u32 offset = (dst - src - 1) * globalDimWeights_.at(globalDim);
+
+    // add all ports where the two global routers are connecting
+    for (u32 weight = 0; weight < globalDimWeights_.at(globalDim);
+         weight++) {
+      u32 globalPort = globalPortBase + offset + weight;
+      bool res = globalOutputPorts.insert(globalPort).second;
+      (void)res;
+      assert(res);
+    }
+    assert(globalOutputPorts.size() > 0);
+
+    // translate global router port number to local router
+    std::set< std::vector<u32> > routerLinkedToGlobalDst;
+    bool hasGlobalLinkToDst = false;
+    u32 portBase = getPortBase();
+
+    for (auto itr = globalOutputPorts.begin();
+         itr != globalOutputPorts.end(); itr++) {
+      std::vector<u32> localRouter(localDimensions);
+      u32 connectedPort;
+      globalPortToLocalAddress(*itr, &localRouter, &connectedPort);
+      routerLinkedToGlobalDst.insert(localRouter);
+      // test if router has a global link to destination global router
+      if (std::equal(localRouter.begin(), localRouter.end(),
+          routerAddress.begin())) {
+        // found direct global link to destation global router
+        hasGlobalLinkToDst = true;
+        // set output ports to those links
+        bool res = outputPorts.insert(portBase + connectedPort).second;
         (void)res;
         assert(res);
       }
-      assert(globalOutputPorts.size() > 0);
-
-      // translate global router port number to local router
-      std::set< std::vector<u32> > routerLinkedToGlobalDst;
-
-      for (auto itr = globalOutputPorts.begin();
-           itr != globalOutputPorts.end(); itr++) {
-        std::vector<u32> localRouter(localDimensions);
-        u32 connectedPort;
-        globalPortToLocalAddress(*itr, &localRouter, &connectedPort);
-        routerLinkedToGlobalDst.insert(localRouter);
-        // find the availability for each of the links in each of the diff dims
-        f64 availability = 0.0;
-        for (u32 vc = _flit->getGlobalHopCount(); vc < numVcs_;
-             vc += globalDimWidths_.size() + 1) {
-          u32 vcIdx = router_->vcIndex(getPortBase() + connectedPort, vc);
-          availability += router_->congestionStatus(vcIdx);
-        }
-        globalPortAvailability.insert(std::make_pair(*itr, availability));
-      }
-    }
-    // find the global port with max availability
-    u32 highestGlobalPort = findHighestPort(globalPortAvailability);
-
-    // doing a traslation from globalPort to localRouterAddress again
-    std::vector<u32> highestRouter(localDimensions);
-    u32 connectedPort;
-    globalPortToLocalAddress(highestGlobalPort, &highestRouter, &connectedPort);
-
-    // test if router has a global link to destination global router
-    bool hasGlobalLinkToDst = false;
-    if (std::equal(highestRouter.begin(), highestRouter.end(),
-                   routerAddress.begin())) {
-      // found direct global link to destation global router
-      hasGlobalLinkToDst = true;
-      // set output ports to those links
-      bool res = outputPorts.insert(getPortBase() + connectedPort).second;
-      (void)res;
-      assert(res);
     }
 
     // if router has no direct global link to destination global router
     if (hasGlobalLinkToDst != true) {
-      // route to the local router with highest availability
-      // determine the local dimension to work on
-      std::vector<u32> diffLocalDims;
-      std::unordered_map<u32, f64> portAvailability;
-      for (u32 localDim = 0; localDim < localDimensions; localDim++) {
-        if (routerAddress.at(localDim) != highestRouter.at(localDim)) {
-          diffLocalDims.push_back(localDim);
+      // route to all the local routers which have a link to global dst
+      for (auto itr = routerLinkedToGlobalDst.begin();
+           itr != routerLinkedToGlobalDst.end(); itr++) {
+        // determine the next local dimension to work on
+        u32 localDim;
+        u32 portBase = concentration_;
+        for (localDim = 0; localDim < localDimensions; localDim++) {
+          if (routerAddress.at(localDim) != itr->at(localDim)) {
+            break;
+          }
+        portBase += ((localDimWidths_.at(localDim) - 1)
+                     * localDimWeights_.at(localDim));
+        }
+        // more local router-to-router hops needed
+        u32 src = routerAddress.at(localDim);
+        u32 dst = itr->at(localDim);
+        if (dst < src) {
+          dst += localDimWidths_.at(localDim);
+        }
+        u32 offset = (dst - src - 1) * localDimWeights_.at(localDim);
+        // add all ports where the two routers are connecting
+        for (u32 weight = 0; weight < localDimWeights_.at(localDim);
+             weight++) {
+          bool res = outputPorts.insert(portBase + offset + weight).second;
+          (void)res;
+          // there are cases where the same output is inserted multiple
+          // times, so should not assert res
+          // assert(res);
         }
       }
-      findPortAvailability(diffLocalDims, &portAvailability, &highestRouter,
-                           _flit);
+      // route to the local router with highest availability
+      // determine the local dimension to work on
+      // std::vector<u32> diffLocalDims;
+      // std::unordered_map<u32, f64> portAvailability;
+      // for (u32 localDim = 0; localDim < localDimensions; localDim++) {
+      //  if (routerAddress.at(localDim) != highestRouter.at(localDim)) {
+      //    diffLocalDims.push_back(localDim);
+      //  }
+      // }
+      // findPortAvailability(diffLocalDims, &portAvailability, &highestRouter,
+      //                     _flit);
       // find the port with max availability
-      u32 highestPort = findHighestPort(portAvailability);
-      bool res = outputPorts.insert(highestPort).second;
-      (void)res;
-      assert(res);
-    } else {
-      _flit->incrementGlobalHopCount();
+      // u32 highestPort = findHighestPort(portAvailability);
+      // bool res = outputPorts.insert(highestPort).second;
+      // (void)res;
+      // assert(res);
     }
   } else {
     // if at the same global virtual router

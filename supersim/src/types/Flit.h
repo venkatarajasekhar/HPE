@@ -31,7 +31,7 @@ class Flit {
   void incrementGlobalHopCount();
   u32 getGlobalHopCount() const;
   void recordHop(std::vector<u32> hop);
-  std::vector<std::vector<u32> > getHops();
+  std::vector<std::vector<u32> > getHops() const;
   void setIntermediate(bool _intermediateDone);
   bool getIntermediateDone();
 

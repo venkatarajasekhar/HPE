@@ -56,6 +56,7 @@ void DimOrderRoutingAlgorithm::processRequest(
 
   // figure out which VC set to use
   u32 vcSet = _flit->getGlobalHopCount();
+
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
     u32 outputPort = *it;
