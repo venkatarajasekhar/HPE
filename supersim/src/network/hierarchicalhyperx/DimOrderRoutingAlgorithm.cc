@@ -52,7 +52,7 @@ void DimOrderRoutingAlgorithm::processRequest(
 
   // perform routing
   std::unordered_set<u32> outputPorts = routing(_flit, destinationAddress);
-  assert(outputPorts.size() == 1);
+  // assert(outputPorts.size() == 1);
 
   // figure out which VC set to use
   u32 vcSet = _flit->getGlobalHopCount();
@@ -165,7 +165,35 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
 
     // if router has no direct global link to destination global router
     if (hasGlobalLinkToDst != true) {
-      // route to all the local routers which have a link to global dst
+      // find out the least amount of diff dimensions
+      u32 diffDims = localDimensions;
+      for (auto itr = routerLinkedToGlobalDst.begin();
+           itr != routerLinkedToGlobalDst.end(); itr++) {
+        u32 diffDim = 0;
+        for (u32 localDim = 0; localDim < localDimensions; localDim++) {
+          if (routerAddress.at(localDim) != itr->at(localDim)) {
+            diffDim++;
+          }
+        }
+        if (diffDim < diffDims) {
+          diffDims = diffDim;
+        }
+      }
+      // remove local routers that dont have least diff dimensions
+      for (auto itr = routerLinkedToGlobalDst.begin();
+           itr != routerLinkedToGlobalDst.end(); itr++) {
+        u32 diffDim = 0;
+        for (u32 localDim = 0; localDim < localDimensions; localDim++) {
+          if (routerAddress.at(localDim) != itr->at(localDim)) {
+            diffDim++;
+          }
+        }
+        if (diffDim > diffDims) {
+          routerLinkedToGlobalDst.erase(itr);
+        }
+      }
+      // route to the local routers which have a link to global dst
+      // and with the least different dimensions
       for (auto itr = routerLinkedToGlobalDst.begin();
            itr != routerLinkedToGlobalDst.end(); itr++) {
         // determine the next local dimension to work on
