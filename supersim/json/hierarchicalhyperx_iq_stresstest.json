@@ -9,10 +9,10 @@
     "topology": "hierarchical_hyperx",
     "num_vcs": 8,
     "hierarchy": 2,
-    "global_dimension_widths": [8, 4],
+    "global_dimension_widths": [7, 7],
     "global_dimension_weights": [1, 1],
-    "local_dimension_widths": [2],
-    "local_dimension_weights": [1],
+    "local_dimension_widths": [2, 3],
+    "local_dimension_weights": [2, 2],
     "global_links_per_router": 5,
     "concentration": 1,
     "internal_local_channel": {

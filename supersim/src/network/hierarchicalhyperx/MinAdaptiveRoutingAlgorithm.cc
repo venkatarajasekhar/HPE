@@ -47,11 +47,10 @@ MinAdaptiveRoutingAlgorithm::~MinAdaptiveRoutingAlgorithm() {}
 
 void MinAdaptiveRoutingAlgorithm::processRequest(
     Flit* _flit, RoutingAlgorithm::Response* _response) {
-  // printf("\n \n");
   // ex: [c,1,...,m,1,...,n]
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
-
+  dbgprintf("\n \n");
   dbgprintf("Destination address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
 
@@ -62,11 +61,12 @@ void MinAdaptiveRoutingAlgorithm::processRequest(
   // figure out which VC set to use
   u32 vcSet = _flit->getGlobalHopCount();
   if (*outputPorts.begin() >= getPortBase()) {
+    dbgprintf("outputport is %u \n", *outputPorts.begin());
     _flit->incrementGlobalHopCount();
     _flit->recordHop(router_->getAddress());
   }
-  printf("vcset = %u\n", vcSet);
-  printf("gethop size = %li\n", _flit->getHops().size());
+  dbgprintf("vcset = %u\n", vcSet);
+  dbgprintf("gethop size = %li\n", _flit->getHops().size());
 
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
@@ -77,15 +77,16 @@ void MinAdaptiveRoutingAlgorithm::processRequest(
     }
   }
   assert(_response->size() > 0);
-  printf("end \n");
 }
 
 std::unordered_set<u32> MinAdaptiveRoutingAlgorithm::routing(Flit* _flit,
   const std::vector<u32>* destinationAddress) {
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
+  std::vector<u32> hardcode = {0, 0, 6, 3};
   dbgprintf("Router address is %s \n",
-         strop::vecString<u32>(routerAddress).c_str());
+            strop::vecString<u32>(routerAddress).c_str());
+
   assert(routerAddress.size() == destinationAddress->size() - 1);
   u32 globalDimensions = globalDimWidths_.size();
   u32 localDimensions = localDimWidths_.size();
@@ -126,6 +127,7 @@ std::unordered_set<u32> MinAdaptiveRoutingAlgorithm::routing(Flit* _flit,
       bool res = globalOutputPorts.insert(globalPort).second;
       (void)res;
       assert(res);
+      dbgprintf("connected global port = %u \n", globalPort);
     }
     assert(globalOutputPorts.size() > 0);
 
@@ -140,6 +142,7 @@ std::unordered_set<u32> MinAdaptiveRoutingAlgorithm::routing(Flit* _flit,
       u32 connectedPort;
       globalPortToLocalAddress(*itr, &localRouter, &connectedPort);
       routerLinkedToGlobalDst.insert(localRouter);
+
       // test if router has a global link to destination global router
       if (std::equal(localRouter.begin(), localRouter.end(),
           routerAddress.begin())) {
@@ -256,10 +259,11 @@ void MinAdaptiveRoutingAlgorithm::globalPortToLocalAddress(u32 globalPort,
   for (u32 tmp = 0; tmp < localDimensions - 1; tmp++) {
     product *= localDimWidths_.at(tmp);
   }
+  u32 globalPortCopy = globalPort;
   for (s32 localDim = localDimensions - 1; localDim >= 0; localDim--) {
-       localAddress->at(localDim) = (globalPort / product)
-                                    % localDimWidths_.at(localDim);
-    globalPort %= product;
+    localAddress->at(localDim) = (globalPortCopy / product)
+                                  % localDimWidths_.at(localDim);
+    globalPortCopy %= product;
     if (localDim != 0) {
       product /= localDimWidths_.at(localDim - 1);
     }
