@@ -43,6 +43,9 @@ class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
   std::unordered_set<u32> routing(
       Flit* _flit, const std::vector<u32>* destinationAddress);
+  u32 getPortBase();
+  void globalPortToLocalAddress(u32 globalPort,
+      std::vector<u32>* localAddress, u32* localPortWithoutBase);
 
   // Router* router_;
   u32 numVcs_;

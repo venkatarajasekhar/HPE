@@ -51,6 +51,11 @@ class Packet {
   void* getRoutingExtension() const;
   void setRoutingExtension(void* _ext);
 
+  void* getLocalDst() const;
+  void setLocalDst(void* _localDst);
+  u32 getLocalDstPort() const;
+  void setLocalDstPort(u32 _localDstPort);
+
  private:
   u32 id_;
   std::vector<Flit*> flits_;
@@ -60,6 +65,10 @@ class Packet {
   u64 metadata_;
 
   void* routingExtension_;
+
+  void* localDst_;
+  u32 localDstPort_;
+  // bool localDstSet;
 };
 
 #endif  // TYPES_PACKET_H_

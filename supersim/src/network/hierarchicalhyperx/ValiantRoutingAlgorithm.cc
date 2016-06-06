@@ -108,6 +108,7 @@ void ValiantRoutingAlgorithm::processRequest(
      }
 
     assert(outputPorts.size() > 0);
+
     // figure out which VC set to use
     u32 vcSet = _flit->getGlobalHopCount();
     dbgprintf("using vcset %u \n", vcSet);

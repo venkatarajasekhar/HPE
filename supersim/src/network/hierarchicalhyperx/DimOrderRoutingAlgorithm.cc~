@@ -139,7 +139,7 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
       u32 globalOutputPort = *itr;
       for (s32 localDim = localDimensions - 1; localDim >= 0; localDim--) {
         localRouter.at(localDim) = (globalOutputPort / product)
-          % localDimWidths_.at(localDim);
+                                   % localDimWidths_.at(localDim);
         globalOutputPort %= product;
         if (localDim != 0) {
           product /= localDimWidths_.at(localDim - 1);
