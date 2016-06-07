@@ -88,6 +88,8 @@ void ValiantRoutingAlgorithm::processRequest(
     // delete the routing extension
     delete intermediateAddress;
     packet->setRoutingExtension(nullptr);
+    packet->setLocalDst(nullptr);
+    packet->setLocalDstPort(nullptr);
   } else {
     // update intermediate info for Valiant
     const std::vector<u32> intermediateRouter(intermediateAddress->begin() +
@@ -108,10 +110,20 @@ void ValiantRoutingAlgorithm::processRequest(
      }
 
     assert(outputPorts.size() > 0);
+    if (*outputPorts.begin() >= getPortBase()) {
+      _flit->incrementGlobalHopCount();
+      _flit->recordHop(router_->getAddress());
+      // delete local router
+      packet->setLocalDst(nullptr);
+      packet->setLocalDstPort(nullptr);
+    }
 
     // figure out which VC set to use
     u32 vcSet = _flit->getGlobalHopCount();
     dbgprintf("using vcset %u \n", vcSet);
+    assert(vcSet <= 2 * globalDimWidths_.size() + 2);
+
+
     // format the response
     for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
       u32 outputPort = *it;

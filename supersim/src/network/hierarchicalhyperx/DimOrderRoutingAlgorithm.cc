@@ -58,18 +58,19 @@ void DimOrderRoutingAlgorithm::processRequest(
     _flit->recordHop(router_->getAddress());
     // delete local router
     _flit->getPacket()->setLocalDst(nullptr);
+    _flit->getPacket()->setLocalDstPort(nullptr);
   }
   // figure out which VC set to use
   u32 vcSet = _flit->getGlobalHopCount();
-  std::vector<u32> hardcode = {0, 0, 1, 1, 0};
   dbgprintf("current vcset %u \n", vcSet);
+  assert(vcSet <= globalDimWidths_.size() + 1);
 
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
+    dbgprintf("output port is %u \n", *it);
     u32 outputPort = *it;
     // select VCs in the corresponding set
     for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
-      // for (u32 vc = 0; vc < numVcs_; vc += 1) {
       _response->add(outputPort, vc);
     }
   }
@@ -78,7 +79,6 @@ void DimOrderRoutingAlgorithm::processRequest(
 
 std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
   const std::vector<u32>* destinationAddress) {
-  std::vector<u32> hardcode = {0, 0, 1, 1, 0};
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
   dbgprintf("\nDim: Router address is %s \n",
@@ -130,24 +130,46 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
         globalOutputPorts.push_back(globalPort);
       }
       assert(globalOutputPorts.size() > 0);
-      // pick a random global port
-      u32 globalPort = globalOutputPorts.at(gSim->rnd.nextU64(
-                       0, globalOutputPorts.size() - 1));
 
-      // translate global router port number to local router
-      std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
-      u32 connectedPort;
-      globalPortToLocalAddress(globalPort, localRouter, &connectedPort);
+      bool hasGlobalLinkToDst = false;
+      std::vector<u32>* dstPort = new std::vector<u32>;
 
-      dbgprintf("Setting local router address to %s \n",
-                strop::vecString<u32>(*localRouter).c_str());
-      packet->setLocalDst(localRouter);
-      packet->setLocalDstPort(connectedPort);
+      // set local dst to self if has global link
+      for (auto itr = globalOutputPorts.begin();
+           itr != globalOutputPorts.end(); itr++) {
+        std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
+        u32 connectedPort;
+        globalPortToLocalAddress(*itr, localRouter, &connectedPort);
+        if (std::equal(localRouter->begin(), localRouter->end(),
+                       routerAddress.begin())) {
+          hasGlobalLinkToDst = true;
+          packet->setLocalDst(localRouter);
+          dstPort->push_back(connectedPort);
+          packet->setLocalDstPort(dstPort);
+        }
+      }
+
+      // if no global link, pick a random one
+      if (hasGlobalLinkToDst == false) {
+        // pick a random global port
+        u32 globalPort = globalOutputPorts.at(gSim->rnd.nextU64(
+                         0, globalOutputPorts.size() - 1));
+
+        // translate global router port number to local router
+        std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
+        u32 connectedPort;
+        globalPortToLocalAddress(globalPort, localRouter, &connectedPort);
+        dstPort->push_back(connectedPort);
+        packet->setLocalDst(localRouter);
+        packet->setLocalDstPort(dstPort);
+      }
     }
 
     const std::vector<u32>* localDst =
       reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
-    dbgprintf("Connected local router address is %s \n",
+    const std::vector<u32>* localDstPort =
+      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
+    dbgprintf("Connected local dst is %s \n",
                strop::vecString<u32>(*localDst).c_str());
 
     u32 portBase = getPortBase();
@@ -155,10 +177,12 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
     if (std::equal(localDst->begin(), localDst->end(),
           routerAddress.begin())) {
       // set output ports to those links
-      u32 localDstPort = packet->getLocalDstPort();
-      bool res = outputPorts.insert(portBase + localDstPort).second;
-      (void)res;
-      assert(res);
+      for (auto itr = localDstPort->begin();
+           itr != localDstPort->end(); itr++) {
+        bool res = outputPorts.insert(portBase + *itr).second;
+        (void)res;
+        assert(res);
+      }
       // router has global link to dst
       // update the globalHopCount for VC set selection
       // _flit->incrementGlobalHopCount();
@@ -193,6 +217,7 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
     // if at the same global virtual router
     // use the regular dimension order routing of HyperX
     packet->setLocalDst(nullptr);
+    packet->setLocalDstPort(nullptr);
     // determine the next local dimension to work on
     u32 localDim;
     u32 portBase = concentration_;
@@ -260,7 +285,7 @@ void DimOrderRoutingAlgorithm::globalPortToLocalAddress(u32 globalPort,
   assert(localAddress->size() == localDimensions);
   *localPortWithoutBase = globalPort / numRoutersPerGlobalRouter;
   assert(*localPortWithoutBase < globalLinksPerRouter_);
-  dbgprintf("Connected local router address is %s \n",
+  dbgprintf("Computed local router address is %s \n",
             strop::vecString<u32>(*localAddress).c_str());
 }
 

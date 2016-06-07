@@ -53,8 +53,8 @@ class Packet {
 
   void* getLocalDst() const;
   void setLocalDst(void* _localDst);
-  u32 getLocalDstPort() const;
-  void setLocalDstPort(u32 _localDstPort);
+  void* getLocalDstPort() const;
+  void setLocalDstPort(void* _localDstPort);
 
  private:
   u32 id_;
@@ -67,8 +67,7 @@ class Packet {
   void* routingExtension_;
 
   void* localDst_;
-  u32 localDstPort_;
-  // bool localDstSet;
+  void* localDstPorts_;
 };
 
 #endif  // TYPES_PACKET_H_

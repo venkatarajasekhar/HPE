@@ -23,8 +23,10 @@
 Packet::Packet(u32 _id, u32 _numFlits, Message* _message)
   : id_(_id), message_(_message), hopCount_(0),
     metadata_(U64_MAX), routingExtension_(nullptr),
-    localDst_(nullptr) {
+    localDst_(nullptr), localDstPorts_(nullptr) {
   flits_.resize(_numFlits);
+  // localDstPorts_ = new std::vector<u32>;
+  // localDstPorts_->at(0) = U32_MAX;
 }
 
 Packet::~Packet() {
@@ -35,6 +37,7 @@ Packet::~Packet() {
   }
   assert(routingExtension_ == nullptr);
   assert(localDst_ == nullptr);
+  assert(localDstPorts_ == nullptr);
 }
 
 u32 Packet::getId() const {
@@ -108,10 +111,10 @@ void Packet::setLocalDst(void* _localDst) {
   localDst_ = _localDst;
 }
 
-u32 Packet::getLocalDstPort() const {
-  return localDstPort_;
+void* Packet::getLocalDstPort() const {
+  return localDstPorts_;
 }
 
-void Packet::setLocalDstPort(u32 _localDstPort) {
-  localDstPort_ = _localDstPort;
+void Packet::setLocalDstPort(void* _localDstPort) {
+  localDstPorts_ = _localDstPort;
 }
