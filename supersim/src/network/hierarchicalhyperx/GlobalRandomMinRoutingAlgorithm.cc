@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "network/hierarchicalhyperx/DimOrderRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/GlobalRandomMinRoutingAlgorithm.h"
 #include <strop/strop.h>
 #include <cassert>
 
@@ -24,7 +24,7 @@
 
 namespace HierarchicalHyperX {
 
-DimOrderRoutingAlgorithm::DimOrderRoutingAlgorithm(
+GlobalRandomMinRoutingAlgorithm::GlobalRandomMinRoutingAlgorithm(
     const std::string& _name, const Component* _parent, u64 _latency,
     Router* _router, u32 _numVcs,
     const std::vector<u32>& _globalDimensionWidths,
@@ -42,9 +42,9 @@ DimOrderRoutingAlgorithm::DimOrderRoutingAlgorithm(
   assert(numVcs_ >= globalDimWidths_.size() + 1);
 }
 
-DimOrderRoutingAlgorithm::~DimOrderRoutingAlgorithm() {}
+GlobalRandomMinRoutingAlgorithm::~GlobalRandomMinRoutingAlgorithm() {}
 
-void DimOrderRoutingAlgorithm::processRequest(
+void GlobalRandomMinRoutingAlgorithm::processRequest(
     Flit* _flit, RoutingAlgorithm::Response* _response) {
   // ex: [c,1,...,m,1,...,n]
   const std::vector<u32>* destinationAddress =
@@ -77,7 +77,7 @@ void DimOrderRoutingAlgorithm::processRequest(
   assert(_response->size() > 0);
 }
 
-std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
+std::unordered_set<u32> GlobalRandomMinRoutingAlgorithm::routing(Flit* _flit,
   const std::vector<u32>* destinationAddress) {
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
@@ -97,15 +97,15 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
   }
 
   // determine if already at destination virtual global router
-  u32 globalDim;
-  u32 globalPortBase = 0;
-  for (globalDim = 0; globalDim < globalDimensions; globalDim++) {
+  std::vector<u32> diffGlobalDims;
+  assert(diffGlobalDims.size() == 0);
+  bool atGlobalDst = true;
+  for (u32 globalDim = 0; globalDim < globalDimensions; globalDim++) {
     if (routerAddress.at(localDimensions + globalDim)
         != destinationAddress->at(localDimensions + globalDim + 1)) {
-      break;
+      diffGlobalDims.push_back(globalDim);
+      atGlobalDst = false;
     }
-    globalPortBase += ((globalDimWidths_.at(globalDim) - 1)
-                 * globalDimWeights_.at(globalDim));
   }
 
   // first perform routing at the global level
@@ -113,8 +113,16 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
   std::unordered_set<u32> outputPorts;
 
   // if at different global router
-  if (globalDim != globalDimensions) {
+  if (atGlobalDst == false) {
     if (packet->getLocalDst() == nullptr) {
+      // pick a random global dimension
+      u32 globalDim = diffGlobalDims.at(gSim->rnd.nextU64(0,
+                                        diffGlobalDims.size() - 1));
+      u32 globalPortBase = 0;
+      for (u32 tmp = 0; tmp < globalDim; tmp++) {
+        globalPortBase += ((globalDimWidths_.at(tmp) - 1)
+                           * globalDimWeights_.at(tmp));
+      }
       // find the right port of the virtual global router
       u32 src = routerAddress.at(localDimensions + globalDim);
       u32 dst = destinationAddress->at(localDimensions + globalDim + 1);
@@ -253,7 +261,7 @@ std::unordered_set<u32> DimOrderRoutingAlgorithm::routing(Flit* _flit,
   return outputPorts;
 }
 
-u32 DimOrderRoutingAlgorithm::getPortBase() {
+u32 GlobalRandomMinRoutingAlgorithm::getPortBase() {
   u32 localDimensions = localDimWidths_.size();
   u32 portBase = concentration_;
   for (u32 i = 0; i < localDimensions; i++) {
@@ -262,7 +270,7 @@ u32 DimOrderRoutingAlgorithm::getPortBase() {
   return portBase;
 }
 
-void DimOrderRoutingAlgorithm::globalPortToLocalAddress(u32 globalPort,
+void GlobalRandomMinRoutingAlgorithm::globalPortToLocalAddress(u32 globalPort,
   std::vector<u32>* localAddress, u32* localPortWithoutBase) {
   u32 localDimensions = localDimWidths_.size();
   u32 numRoutersPerGlobalRouter = 1;

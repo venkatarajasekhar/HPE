@@ -32,6 +32,7 @@ class ValiantRoutingAlgorithm : public DimOrderRoutingAlgorithm {
  protected:
   void processRequest(
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
+  bool randomGroup_;
 };
 
 }  // namespace HierarchicalHyperX

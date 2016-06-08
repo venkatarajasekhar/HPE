@@ -17,9 +17,10 @@
 
 #include <cassert>
 
-#include "network/hierarchicalhyperx/DimOrderRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/GlobalDimOrderRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/MinAdaptiveRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/GlobalRandomMinRoutingAlgorithm.h"
 #include "network/RoutingAlgorithm.h"
 
 namespace HierarchicalHyperX {
@@ -49,7 +50,7 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
   bool _randomGroup = settings_["random_group"].asBool();
 
   if (algorithm == "dimension_order") {
-    return new HierarchicalHyperX::DimOrderRoutingAlgorithm(
+    return new HierarchicalHyperX::GlobalDimOrderRoutingAlgorithm(
         _name, _parent, _latency, _router, numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);
@@ -58,6 +59,11 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_, _randomGroup);
+  } else if (algorithm == "global_random_min") {
+    return new HierarchicalHyperX::GlobalRandomMinRoutingAlgorithm(
+        _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
+        globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
+        concentration_, globalLinksPerRouter_);
   } else if (algorithm == "min_adaptive") {
     return new HierarchicalHyperX::MinAdaptiveRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,

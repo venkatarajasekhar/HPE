@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NETWORK_HIERARCHICALHYPERX_DIMORDERROUTINGALGORITHM_H_
-#define NETWORK_HIERARCHICALHYPERX_DIMORDERROUTINGALGORITHM_H_
+#ifndef NETWORK_HIERARCHICALHYPERX_GLOBALRANDOMMINROUTINGALGORITHM_H_
+#define NETWORK_HIERARCHICALHYPERX_GLOBALRANDOMMINROUTINGALGORITHM_H_
 
 #include <prim/prim.h>
 
@@ -27,16 +27,17 @@
 
 namespace HierarchicalHyperX {
 
-class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
+class GlobalRandomMinRoutingAlgorithm : public RoutingAlgorithm {
  public:
-  DimOrderRoutingAlgorithm(const std::string& _name, const Component* _parent,
+  GlobalRandomMinRoutingAlgorithm(const std::string& _name,
+                          const Component* _parent,
                           u64 _latency, Router* _router, u32 _numVcs,
                           const std::vector<u32>& _globalDimensionWidths,
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
                           u32 _concentration, u32 _globalLinksPerRouter);
-  ~DimOrderRoutingAlgorithm();
+  ~GlobalRandomMinRoutingAlgorithm();
 
  protected:
   void processRequest(
@@ -60,4 +61,4 @@ class DimOrderRoutingAlgorithm : public RoutingAlgorithm {
 
 }  // namespace HierarchicalHyperX
 
-#endif  // NETWORK_HIERARCHICALHYPERX_DIMORDERROUTINGALGORITHM_H_
+#endif  // NETWORK_HIERARCHICALHYPERX_GLOBALRANDOMMINROUTINGALGORITHM_H_

@@ -21,7 +21,7 @@ ValiantRoutingAlgorithm::ValiantRoutingAlgorithm(
     const std::vector<u32>& _localDimensionWidths,
     const std::vector<u32>& _localDimensionWeights,
     u32 _concentration, u32 _globalLinksPerRouter, bool _randomGroup)
-  : DimOrderRoutingAlgorithm(_name, _parent,
+  : GlobalDimOrderRoutingAlgorithm(_name, _parent,
     _latency, _router, _numVcs, _globalDimensionWidths,
     _globalDimensionWeights, _localDimensionWidths, _localDimensionWeights,
     _concentration, _globalLinksPerRouter), randomGroup_(_randomGroup) {
@@ -110,11 +110,11 @@ void ValiantRoutingAlgorithm::processRequest(
     std::unordered_set<u32> outputPorts;
     // first stage of valiant
     if (_flit->getIntermediateDone() == false) {
-      outputPorts = DimOrderRoutingAlgorithm::routing(
+      outputPorts = GlobalDimOrderRoutingAlgorithm::routing(
                     _flit, intermediateAddress);
       assert(_flit->getGlobalHopCount() < globalDimWidths_.size() + 1);
      } else {
-      outputPorts = DimOrderRoutingAlgorithm::routing(
+      outputPorts = GlobalDimOrderRoutingAlgorithm::routing(
                     _flit, destinationAddress);
      }
 
