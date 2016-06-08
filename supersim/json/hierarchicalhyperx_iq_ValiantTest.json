@@ -29,7 +29,8 @@
     },
     "routing": {
       "algorithm": "valiant",
-      "latency": 1
+      "latency": 1,
+      "random_group": false 
     },
     "interface": {
       "type": "standard",
@@ -92,7 +93,7 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.3,
+    "max_injection_rate": 0.2,
     "warmup_threshold": 0.99,
     "blast_terminal": {
       "num_messages": 100,

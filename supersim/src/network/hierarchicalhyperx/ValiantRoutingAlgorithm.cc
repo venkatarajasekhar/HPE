@@ -20,11 +20,11 @@ ValiantRoutingAlgorithm::ValiantRoutingAlgorithm(
     const std::vector<u32>& _globalDimensionWeights,
     const std::vector<u32>& _localDimensionWidths,
     const std::vector<u32>& _localDimensionWeights,
-    u32 _concentration, u32 _globalLinksPerRouter)
+    u32 _concentration, u32 _globalLinksPerRouter, bool _randomGroup)
   : DimOrderRoutingAlgorithm(_name, _parent,
     _latency, _router, _numVcs, _globalDimensionWidths,
     _globalDimensionWeights, _localDimensionWidths, _localDimensionWeights,
-    _concentration, _globalLinksPerRouter) {
+    _concentration, _globalLinksPerRouter), randomGroup_(_randomGroup) {
   assert(numVcs_ >= 2 * globalDimWidths_.size() + 2);
 }
 
@@ -92,11 +92,20 @@ void ValiantRoutingAlgorithm::processRequest(
     packet->setLocalDstPort(nullptr);
   } else {
     // update intermediate info for Valiant
-    const std::vector<u32> intermediateRouter(intermediateAddress->begin() +
-      localDimWidths_.size() + 1, intermediateAddress->end());
-    if (std::equal(routerAddress.begin() + localDimWidths_.size(),
-                   routerAddress.end(), intermediateRouter.begin())) {
-      _flit->setIntermediate(true);
+    if (randomGroup_ == true) {
+      const std::vector<u32> intermediateGroup(intermediateAddress->begin() +
+                       localDimWidths_.size() + 1, intermediateAddress->end());
+      if (std::equal(routerAddress.begin() + localDimWidths_.size(),
+                     routerAddress.end(), intermediateGroup.begin())) {
+        _flit->setIntermediate(true);
+      }
+    } else {
+      const std::vector<u32> intermediateRouter(intermediateAddress->begin()
+                                     + 1, intermediateAddress->end());
+      if (std::equal(routerAddress.begin(), routerAddress.end(),
+                     intermediateRouter.begin())) {
+        _flit->setIntermediate(true);
+      }
     }
     std::unordered_set<u32> outputPorts;
     // first stage of valiant

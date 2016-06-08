@@ -46,7 +46,7 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
     u32 _inputPort) {
   std::string algorithm = settings_["algorithm"].asString();
   u32 latency = settings_["latency"].asUInt();
-  bool allVcs = settings_["all_vcs"].asBool();
+  // bool allVcs = settings_["all_vcs"].asBool();
 
   if (algorithm == "dimension_order") {
     return new HierarchicalHyperX::DimOrderRoutingAlgorithm(
@@ -57,12 +57,12 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
     return new HierarchicalHyperX::ValiantRoutingAlgorithm(
         _name, _parent, latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_, allVcs);
+        concentration_, globalLinksPerRouter_);
   } else if (algorithm == "min_adaptive") {
     return new HierarchicalHyperX::MinAdaptiveRoutingAlgorithm(
         _name, _parent, latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_, allVcs);
+        concentration_, globalLinksPerRouter_);
   } else {
     fprintf(stderr, "Unknown routing algorithm: '%s'\n", algorithm.c_str());
     assert(false);

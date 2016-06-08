@@ -89,7 +89,7 @@ void ValiantRoutingAlgorithm::processRequest(
     delete intermediateAddress;
     packet->setRoutingExtension(nullptr);
     packet->setLocalDst(nullptr);
-    packet->setLocalDst(nullptr);
+    packet->setLocalDstPort(nullptr);
   } else {
     // update intermediate info for Valiant
     const std::vector<u32> intermediateRouter(intermediateAddress->begin() +

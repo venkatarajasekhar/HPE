@@ -45,22 +45,22 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
     const std::string& _name, const Component* _parent, Router* _router,
     u32 _inputPort) {
   std::string algorithm = settings_["algorithm"].asString();
-  u32 latency = settings_["latency"].asUInt();
-  // bool allVcs = settings_["all_vcs"].asBool();
+  u32 _latency = settings_["latency"].asUInt();
+  bool _randomGroup = settings_["random_group"].asBool();
 
   if (algorithm == "dimension_order") {
     return new HierarchicalHyperX::DimOrderRoutingAlgorithm(
-        _name, _parent, latency, _router, numVcs_, globalDimensionWidths_,
+        _name, _parent, _latency, _router, numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);
   } else if (algorithm == "valiant") {
     return new HierarchicalHyperX::ValiantRoutingAlgorithm(
-        _name, _parent, latency, _router,  numVcs_, globalDimensionWidths_,
+        _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_);
+        concentration_, globalLinksPerRouter_, _randomGroup);
   } else if (algorithm == "min_adaptive") {
     return new HierarchicalHyperX::MinAdaptiveRoutingAlgorithm(
-        _name, _parent, latency, _router,  numVcs_, globalDimensionWidths_,
+        _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);
   } else {
