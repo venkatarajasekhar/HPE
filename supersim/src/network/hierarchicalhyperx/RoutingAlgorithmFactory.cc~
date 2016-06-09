@@ -63,7 +63,7 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
     return new HierarchicalHyperX::GlobalRandomMinRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_, _randomGroup);
+        concentration_, globalLinksPerRouter_);
   } else if (algorithm == "min_adaptive") {
     return new HierarchicalHyperX::MinAdaptiveRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,

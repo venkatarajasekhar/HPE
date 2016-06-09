@@ -39,7 +39,10 @@ InjectionAlgorithm* InjectionAlgorithmFactory::createInjectionAlgorithm(
   } else if (algorithm == "valiant") {
     return new HierarchicalHyperX::AnyInjectionAlgorithm(
         _name, _parent, _interface, latency, numVcs_);
-  } else if (algorithm == "global_random_min") {
+  } else if (algorithm == "global_random") {
+    return new HierarchicalHyperX::AnyInjectionAlgorithm(
+        _name, _parent, _interface, latency, numVcs_);
+  } else if (algorithm == "global_local_random") {
     return new HierarchicalHyperX::AnyInjectionAlgorithm(
         _name, _parent, _interface, latency, numVcs_);
   } else if (algorithm == "min_adaptive") {

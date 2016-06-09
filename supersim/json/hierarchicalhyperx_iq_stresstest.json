@@ -28,7 +28,7 @@
       "file": "/dev/null"  // "channels.csv"
     },
     "routing": {
-      "algorithm": "global_random_min",
+      "algorithm": "global_local_random",
       "latency": 1
     },
     "interface": {
