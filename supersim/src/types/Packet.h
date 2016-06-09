@@ -56,6 +56,12 @@ class Packet {
   void* getLocalDstPort() const;
   void setLocalDstPort(void* _localDstPort);
 
+  void incrementGlobalHopCount();
+  u32 getGlobalHopCount() const;
+
+  void setIntermediate(bool _intermediateDone);
+  bool getIntermediateDone();
+
  private:
   u32 id_;
   std::vector<Flit*> flits_;
@@ -68,6 +74,9 @@ class Packet {
 
   void* localDst_;
   void* localDstPorts_;
+
+  u32 globalHopCount_;
+  bool intermediateDone_;
 };
 
 #endif  // TYPES_PACKET_H_

@@ -39,7 +39,7 @@ GlobalAndLocalRandomRoutingAlgorithm::GlobalAndLocalRandomRoutingAlgorithm(
       localDimWeights_(_localDimensionWeights),
       concentration_(_concentration),
       globalLinksPerRouter_(_globalLinksPerRouter) {
-  assert(numVcs_ >= globalDimWidths_.size() + 1);
+  assert(numVcs_ >= (globalDimWidths_.size() + 1) * localDimWidths_.size());
 }
 
 GlobalAndLocalRandomRoutingAlgorithm::~GlobalAndLocalRandomRoutingAlgorithm() {}
@@ -54,14 +54,13 @@ void GlobalAndLocalRandomRoutingAlgorithm::processRequest(
   std::unordered_set<u32> outputPorts = routing(_flit, destinationAddress);
   assert(outputPorts.size() >= 1);
   if (*outputPorts.begin() >= getPortBase()) {
-    _flit->incrementGlobalHopCount();
-    _flit->recordHop(router_->getAddress());
+    _flit->getPacket()->incrementGlobalHopCount();
     // delete local router
     _flit->getPacket()->setLocalDst(nullptr);
     _flit->getPacket()->setLocalDstPort(nullptr);
   }
   // figure out which VC set to use
-  u32 vcSet = _flit->getGlobalHopCount();
+  u32 vcSet = _flit->getPacket()->getGlobalHopCount();
   dbgprintf("current vcset %u \n", vcSet);
   assert(vcSet <= globalDimWidths_.size() + 1);
 

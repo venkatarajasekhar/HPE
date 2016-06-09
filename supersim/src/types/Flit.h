@@ -28,13 +28,6 @@ class Flit {
   void setReceiveTime(u64 time);
   u64 getReceiveTime() const;
 
-  void incrementGlobalHopCount();
-  u32 getGlobalHopCount() const;
-  void recordHop(std::vector<u32> hop);
-  std::vector<std::vector<u32> > getHops() const;
-  void setIntermediate(bool _intermediateDone);
-  bool getIntermediateDone();
-
  private:
   u32 id_;
   bool head_;
@@ -44,10 +37,6 @@ class Flit {
 
   u64 sendTime_;
   u64 receiveTime_;
-
-  u32 globalHopCount_;
-  std::vector<std::vector<u32> > hops;
-  bool intermediateDone_;
 };
 
 #endif  // TYPES_FLIT_H_

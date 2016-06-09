@@ -20,7 +20,8 @@
 #include "network/hierarchicalhyperx/GlobalDimOrderRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/MinAdaptiveRoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/GlobalRandomMinRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/GlobalRandomRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/GlobalAndLocalRandomRoutingAlgorithm.h"
 #include "network/RoutingAlgorithm.h"
 
 namespace HierarchicalHyperX {
@@ -59,8 +60,13 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_, _randomGroup);
-  } else if (algorithm == "global_random_min") {
-    return new HierarchicalHyperX::GlobalRandomMinRoutingAlgorithm(
+  } else if (algorithm == "global_random") {
+    return new HierarchicalHyperX::GlobalRandomRoutingAlgorithm(
+        _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
+        globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
+        concentration_, globalLinksPerRouter_);
+  } else if (algorithm == "global_local_random") {
+    return new HierarchicalHyperX::GlobalAndLocalRandomRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);

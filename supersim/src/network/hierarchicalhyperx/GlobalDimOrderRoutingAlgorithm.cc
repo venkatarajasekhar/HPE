@@ -54,14 +54,13 @@ void GlobalDimOrderRoutingAlgorithm::processRequest(
   std::unordered_set<u32> outputPorts = routing(_flit, destinationAddress);
   assert(outputPorts.size() >= 1);
   if (*outputPorts.begin() >= getPortBase()) {
-    _flit->incrementGlobalHopCount();
-    _flit->recordHop(router_->getAddress());
+    _flit->getPacket()->incrementGlobalHopCount();
     // delete local router
     _flit->getPacket()->setLocalDst(nullptr);
     _flit->getPacket()->setLocalDstPort(nullptr);
   }
   // figure out which VC set to use
-  u32 vcSet = _flit->getGlobalHopCount();
+  u32 vcSet = _flit->getPacket()->getGlobalHopCount();
   dbgprintf("current vcset %u \n", vcSet);
   assert(vcSet <= globalDimWidths_.size() + 1);
 
@@ -183,10 +182,6 @@ std::unordered_set<u32> GlobalDimOrderRoutingAlgorithm::routing(Flit* _flit,
         (void)res;
         assert(res);
       }
-      // router has global link to dst
-      // update the globalHopCount for VC set selection
-      // _flit->incrementGlobalHopCount();
-      // _flit->recordHop(routerAddress);
     } else {
       // determine the next local dimension to work on
       u32 localDim;

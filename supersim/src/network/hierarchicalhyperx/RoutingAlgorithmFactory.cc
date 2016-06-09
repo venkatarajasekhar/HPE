@@ -19,7 +19,7 @@
 
 #include "network/hierarchicalhyperx/GlobalDimOrderRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/MinAdaptiveRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/AdaptiveRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalRandomRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalAndLocalRandomRoutingAlgorithm.h"
 #include "network/RoutingAlgorithm.h"
@@ -71,7 +71,7 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);
   } else if (algorithm == "min_adaptive") {
-    return new HierarchicalHyperX::MinAdaptiveRoutingAlgorithm(
+    return new HierarchicalHyperX::AdaptiveRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);

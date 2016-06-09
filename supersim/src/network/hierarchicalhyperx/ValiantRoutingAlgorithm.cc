@@ -97,22 +97,22 @@ void ValiantRoutingAlgorithm::processRequest(
                        localDimWidths_.size() + 1, intermediateAddress->end());
       if (std::equal(routerAddress.begin() + localDimWidths_.size(),
                      routerAddress.end(), intermediateGroup.begin())) {
-        _flit->setIntermediate(true);
+        packet->setIntermediate(true);
       }
     } else {
       const std::vector<u32> intermediateRouter(intermediateAddress->begin()
                                      + 1, intermediateAddress->end());
       if (std::equal(routerAddress.begin(), routerAddress.end(),
                      intermediateRouter.begin())) {
-        _flit->setIntermediate(true);
+        packet->setIntermediate(true);
       }
     }
     std::unordered_set<u32> outputPorts;
     // first stage of valiant
-    if (_flit->getIntermediateDone() == false) {
+    if (packet->getIntermediateDone() == false) {
       outputPorts = GlobalDimOrderRoutingAlgorithm::routing(
                     _flit, intermediateAddress);
-      assert(_flit->getGlobalHopCount() < globalDimWidths_.size() + 1);
+      assert(packet->getGlobalHopCount() < globalDimWidths_.size() + 1);
      } else {
       outputPorts = GlobalDimOrderRoutingAlgorithm::routing(
                     _flit, destinationAddress);
@@ -120,15 +120,14 @@ void ValiantRoutingAlgorithm::processRequest(
 
     assert(outputPorts.size() > 0);
     if (*outputPorts.begin() >= getPortBase()) {
-      _flit->incrementGlobalHopCount();
-      _flit->recordHop(router_->getAddress());
+      packet->incrementGlobalHopCount();
       // delete local router
       packet->setLocalDst(nullptr);
       packet->setLocalDstPort(nullptr);
     }
 
     // figure out which VC set to use
-    u32 vcSet = _flit->getGlobalHopCount();
+    u32 vcSet = packet->getGlobalHopCount();
     dbgprintf("using vcset %u \n", vcSet);
     assert(vcSet <= 2 * globalDimWidths_.size() + 2);
 
