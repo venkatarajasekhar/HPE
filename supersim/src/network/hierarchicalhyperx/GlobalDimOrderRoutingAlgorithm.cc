@@ -68,9 +68,15 @@ void GlobalDimOrderRoutingAlgorithm::processRequest(
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
     dbgprintf("output port is %u \n", *it);
     u32 outputPort = *it;
-    // select VCs in the corresponding set
-    for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
-      _response->add(outputPort, vc);
+    if (outputPort < concentration_) {
+      for (u32 vc = 0; vc < numVcs_; vc++) {
+        _response->add(outputPort, vc);
+      }
+    } else {
+      // select VCs in the corresponding set
+      for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
+        _response->add(outputPort, vc);
+      }
     }
   }
   assert(_response->size() > 0);
