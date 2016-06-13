@@ -24,10 +24,9 @@ Packet::Packet(u32 _id, u32 _numFlits, Message* _message)
   : id_(_id), message_(_message), hopCount_(0),
     metadata_(U64_MAX), routingExtension_(nullptr),
     localDst_(nullptr), localDstPorts_(nullptr),
-    globalHopCount_(0), intermediateDone_(false) {
+    globalHopCount_(0), intermediateDone_(false),
+    localDetour_(0) {
   flits_.resize(_numFlits);
-  // localDstPorts_ = new std::vector<u32>;
-  // localDstPorts_->at(0) = U32_MAX;
 }
 
 Packet::~Packet() {
@@ -131,6 +130,15 @@ u32 Packet::getGlobalHopCount() const {
 void Packet::setIntermediate(bool _intermediateDone) {
   intermediateDone_ = _intermediateDone;
 }
+
 bool Packet::getIntermediateDone() {
   return intermediateDone_;
+}
+
+u32 Packet::getDetour() const {
+  return localDetour_;
+}
+
+void Packet::setDetour(u32 _localDetour) {
+  localDetour_ = _localDetour;
 }

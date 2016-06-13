@@ -32,15 +32,18 @@ AdaptiveRoutingAlgorithm::AdaptiveRoutingAlgorithm(
     const std::vector<u32>& _globalDimensionWeights,
     const std::vector<u32>& _localDimensionWidths,
     const std::vector<u32>& _localDimensionWeights,
-    u32 _concentration, u32 _globalLinksPerRouter)
+    u32 _concentration, u32 _globalLinksPerRouter,
+    f64 _threshold, u32 _localDetour)
     : RoutingAlgorithm(_name, _parent, _router, _latency),
       numVcs_(_numVcs), globalDimWidths_(_globalDimensionWidths),
       globalDimWeights_(_globalDimensionWeights),
       localDimWidths_(_localDimensionWidths),
       localDimWeights_(_localDimensionWeights),
       concentration_(_concentration),
-      globalLinksPerRouter_(_globalLinksPerRouter) {
-  assert(numVcs_ >= globalDimWidths_.size() + 1);
+      globalLinksPerRouter_(_globalLinksPerRouter),
+      threshold_(_threshold), localDetour_(_localDetour) {
+  assert(numVcs_ >= (globalDimWidths_.size() + 1) * localDimWidths_.size()
+         *(1 + localDetour_) + globalDimWidths_.size());
 }
 
 AdaptiveRoutingAlgorithm::~AdaptiveRoutingAlgorithm() {}
@@ -50,19 +53,27 @@ void AdaptiveRoutingAlgorithm::processRequest(
   // ex: [c,1,...,m,1,...,n]
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
-  dbgprintf("\n \n");
   dbgprintf("Destination address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
 
+  if (_flit->getPacket()->getHopCount() == 1) {
+    _flit->getPacket()->setDetour(localDetour_);
+  }
   // perform routing
   std::unordered_set<u32> outputPorts = routing(_flit, destinationAddress);
-  assert(outputPorts.size() == 1);
+  assert(outputPorts.size() >= 1);
 
-  // figure out which VC set to use
-  u32 vcSet = _flit->getPacket()->getGlobalHopCount();
   if (*outputPorts.begin() >= getPortBase()) {
     _flit->getPacket()->incrementGlobalHopCount();
+    // delete local router
+    _flit->getPacket()->setLocalDst(nullptr);
+    _flit->getPacket()->setLocalDstPort(nullptr);
+    // reset detour
+    _flit->getPacket()->setDetour(localDetour_);
   }
+
+  // figure out which VC set to use
+  u32 vcSet = _flit->getPacket()->getHopCount() - 1;
   dbgprintf("vcset = %u\n", vcSet);
 
   // format the response
@@ -74,7 +85,9 @@ void AdaptiveRoutingAlgorithm::processRequest(
       }
     } else {
       // select VCs in the corresponding set
-      for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
+      for (u32 vc = vcSet; vc < numVcs_; vc += (globalDimWidths_.size() + 1)
+           * localDimWidths_.size() * (1 + localDetour_)
+           + globalDimWidths_.size()) {
         _response->add(outputPort, vc);
       }
     }
@@ -89,6 +102,8 @@ std::unordered_set<u32> AdaptiveRoutingAlgorithm::routing(Flit* _flit,
   dbgprintf("Router address is %s \n",
             strop::vecString<u32>(routerAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
+
+  Packet* packet = _flit->getPacket();
   u32 globalDimensions = globalDimWidths_.size();
   u32 localDimensions = localDimWidths_.size();
   u32 numRoutersPerGlobalRouter = 1;
@@ -97,100 +112,46 @@ std::unordered_set<u32> AdaptiveRoutingAlgorithm::routing(Flit* _flit,
   }
 
   // determine if already at destination virtual global router
-  std::vector<u32> diffGlobalDims;
-  assert(diffGlobalDims.size() == 0);
+  std::vector<u32>* diffGlobalDims = new std::vector<u32>;
+  assert(diffGlobalDims->size() == 0);
   bool atGlobalDst = true;
   for (u32 globalDim = 0; globalDim < globalDimensions; globalDim++) {
     if (routerAddress.at(localDimensions + globalDim)
         != destinationAddress->at(localDimensions + globalDim + 1)) {
-      diffGlobalDims.push_back(globalDim);
+      diffGlobalDims->push_back(globalDim);
       atGlobalDst = false;
     }
   }
   // first perform routing at the global level
+  std::vector<u32> globalOutputPorts;
   std::unordered_set<u32> outputPorts;
 
   // if at different global router
   if (atGlobalDst == false) {
-    std::unordered_map< u32, f64 > globalPortAvailability;
-    // find the all ports of the virtual global router
-    for (auto itr = diffGlobalDims.begin();
-         itr != diffGlobalDims.end(); itr++) {
-      std::unordered_set<u32> globalOutputPorts;
-      u32 src = routerAddress.at(localDimensions + *itr);
-      u32 dst = destinationAddress->at(localDimensions + *itr + 1);
-      if (dst < src) {
-        dst += globalDimWidths_.at(*itr);
-      }
-      u32 offset = (dst - src - 1) * globalDimWeights_.at(*itr);
-
-      u32 globalPortBase = 0;
-      for (u32 globalDim = 0; globalDim < *itr; globalDim++) {
-        globalPortBase += ((globalDimWidths_.at(globalDim) - 1)
-                          * globalDimWeights_.at(globalDim));
-      }
-      // add all ports where the two global routers are connecting
-      for (u32 weight = 0; weight < globalDimWeights_.at(*itr);
-           weight++) {
-        u32 globalPort = globalPortBase + offset + weight;
-        bool res = globalOutputPorts.insert(globalPort).second;
-        (void)res;
-        assert(res);
-        dbgprintf("connected global port = %u \n", globalPort);
-      }
-      assert(globalOutputPorts.size() > 0);
-
-      // translate global router port number to local router
-      std::set< std::vector<u32> > routerLinkedToGlobalDst;
-      for (auto itr = globalOutputPorts.begin();
-           itr != globalOutputPorts.end(); itr++) {
-        std::vector<u32> localRouter(localDimensions);
-        u32 connectedPort;
-        globalPortToLocalAddress(*itr, &localRouter, &connectedPort);
-        routerLinkedToGlobalDst.insert(localRouter);
-        // find the availability for each of the links in each of the diff dims
-        f64 availability = 0.0;
-        for (u32 vc = _flit->getPacket()->getGlobalHopCount(); vc < numVcs_;
-             vc += globalDimWidths_.size() + 1) {
-          u32 vcIdx = router_->vcIndex(getPortBase() + connectedPort, vc);
-          availability += router_->congestionStatus(vcIdx);
-        }
-        globalPortAvailability.insert(std::make_pair(*itr, availability));
-      }
+    if (packet->getLocalDst() == nullptr) {
+      setLocalDst(diffGlobalDims, destinationAddress, &globalOutputPorts,
+                 _flit);
     }
 
-    // find the global port with max availability
-    u32 highestGlobalPort = findHighestPort(globalPortAvailability);
+    const std::vector<u32>* localDst =
+      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
+    dbgprintf("Connected local dst is %s \n",
+               strop::vecString<u32>(*localDst).c_str());
 
-    // doing a traslation from globalPort to localRouterAddress again
-    std::vector<u32> highestRouter(localDimensions);
-    u32 connectedPort;
-    globalPortToLocalAddress(highestGlobalPort, &highestRouter, &connectedPort);
-
-    // test if router has a global link to destination global router
-    bool hasGlobalLinkToDst = false;
-    if (std::equal(highestRouter.begin(), highestRouter.end(),
-                   routerAddress.begin())) {
-      // found direct global link to destation global router
-      hasGlobalLinkToDst = true;
-      // set output ports to those links
-      bool res = outputPorts.insert(getPortBase() + connectedPort).second;
-      (void)res;
-      assert(res);
-    }
-
-    // if router has no direct global link to destination global router
-    if (hasGlobalLinkToDst != true) {
-      // route to the local router with highest availability
+    // if at local dst
+    if (std::equal(localDst->begin(), localDst->end(),
+          routerAddress.begin())) {
+      ifAtLocalDst(_flit, &outputPorts, &globalOutputPorts, diffGlobalDims);
+    } else {
       // determine the local dimension to work on
       std::vector<u32> diffLocalDims;
       std::unordered_map<u32, f64> portAvailability;
       for (u32 localDim = 0; localDim < localDimensions; localDim++) {
-        if (routerAddress.at(localDim) != highestRouter.at(localDim)) {
+        if (routerAddress.at(localDim) != localDst->at(localDim)) {
           diffLocalDims.push_back(localDim);
         }
       }
-      findPortAvailability(diffLocalDims, &portAvailability, &highestRouter,
+      findPortAvailability(diffLocalDims, &portAvailability, localDst,
                            _flit);
       // find the port with max availability
       u32 highestPort = findHighestPort(portAvailability);
@@ -198,6 +159,7 @@ std::unordered_set<u32> AdaptiveRoutingAlgorithm::routing(Flit* _flit,
       (void)res;
       assert(res);
     }
+
   } else {
     // if at the same global virtual router
     // find the port with most availability of all offset dimensions
@@ -291,7 +253,7 @@ u32 AdaptiveRoutingAlgorithm::findHighestPort(
 
 void AdaptiveRoutingAlgorithm::findPortAvailability(
   std::vector<u32> diffDims, std::unordered_map<u32, f64>* portAvailability,
-  std::vector<u32>* destinationAddress, Flit* _flit) {
+  const std::vector<u32>* destinationAddress, Flit* _flit) {
   const std::vector<u32>& routerAddress = router_->getAddress();
   for (auto itr = diffDims.begin(); itr != diffDims.end(); itr++) {
     u32 src = routerAddress.at(*itr);
@@ -318,4 +280,120 @@ void AdaptiveRoutingAlgorithm::findPortAvailability(
     }
   }
 }
+
+void AdaptiveRoutingAlgorithm::setLocalDst(std::vector<u32>* diffGlobalDims,
+        const std::vector<u32>* destinationAddress,
+        std::vector<u32>* globalOutputPorts, Flit* _flit) {
+  const std::vector<u32>& routerAddress = router_->getAddress();
+  u32 localDimensions = localDimWidths_.size();
+  Packet* packet = _flit->getPacket();
+
+  // pick a random global dimension
+  u32 globalDim = diffGlobalDims->at(gSim->rnd.nextU64(0,
+                                    diffGlobalDims->size() - 1));
+  u32 globalPortBase = 0;
+  for (u32 tmp = 0; tmp < globalDim; tmp++) {
+    globalPortBase += ((globalDimWidths_.at(tmp) - 1)
+                        * globalDimWeights_.at(tmp));
+  }
+  // find the right port of the virtual global router
+  u32 src = routerAddress.at(localDimensions + globalDim);
+  u32 dst = destinationAddress->at(localDimensions + globalDim + 1);
+  if (dst < src) {
+    dst += globalDimWidths_.at(globalDim);
+  }
+  u32 offset = (dst - src - 1) * globalDimWeights_.at(globalDim);
+
+  // add all ports where the two global routers are connecting
+  for (u32 weight = 0; weight < globalDimWeights_.at(globalDim);
+       weight++) {
+    u32 globalPort = globalPortBase + offset + weight;
+    globalOutputPorts->push_back(globalPort);
+  }
+  assert(globalOutputPorts->size() > 0);
+
+  bool hasGlobalLinkToDst = false;
+  std::vector<u32>* dstPort = new std::vector<u32>;
+
+  // set local dst to self if has global link
+  for (auto itr = globalOutputPorts->begin();
+       itr != globalOutputPorts->end(); itr++) {
+    std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
+    u32 connectedPort;
+    globalPortToLocalAddress(*itr, localRouter, &connectedPort);
+    if (std::equal(localRouter->begin(), localRouter->end(),
+                   routerAddress.begin())) {
+      hasGlobalLinkToDst = true;
+      packet->setLocalDst(localRouter);
+      dstPort->push_back(connectedPort);
+      packet->setLocalDstPort(dstPort);
+    }
+  }
+  // if no global link, pick a random one
+  if (hasGlobalLinkToDst == false) {
+    // pick a random global port
+    u32 globalPort = globalOutputPorts->at(gSim->rnd.nextU64(
+                     0, globalOutputPorts->size() - 1));
+
+    // translate global router port number to local router
+    std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
+    u32 connectedPort;
+    globalPortToLocalAddress(globalPort, localRouter, &connectedPort);
+    dstPort->push_back(connectedPort);
+    packet->setLocalDst(localRouter);
+    packet->setLocalDstPort(dstPort);
+  }
+}
+
+void AdaptiveRoutingAlgorithm::ifAtLocalDst(Flit* _flit,
+  std::unordered_set<u32>* outputPorts,
+  std::vector<u32>* globalOutputPorts, std::vector<u32>* diffGlobalDims) {
+  Packet* packet = _flit->getPacket();
+  const std::vector<u32>& routerAddress = router_->getAddress();
+  const std::vector<u32>* destinationAddress =
+      _flit->getPacket()->getMessage()->getDestinationAddress();
+
+  const std::vector<u32>* localDst =
+      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
+  const std::vector<u32>* localDstPort =
+      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
+  dbgprintf("Connected local dst is %s \n",
+               strop::vecString<u32>(*localDst).c_str());
+
+  u32 portBase = getPortBase();
+  // if at local dst
+  if (std::equal(localDst->begin(), localDst->end(),
+          routerAddress.begin())) {
+    assert(outputPorts->size() == 0);
+    // set output ports to those links
+    for (auto itr = localDstPort->begin();
+         itr != localDstPort->end(); itr++) {
+      f64 availability = 0.0;
+      u32 vcCount = 0;
+      for (u32 vc = _flit->getPacket()->getHopCount(); vc < numVcs_;
+           vc += (globalDimWidths_.size() + 1)
+                  * localDimWidths_.size() * (1 + localDetour_)
+                  + globalDimWidths_.size()) {
+        u32 vcIdx = router_->vcIndex(portBase + *itr, vc);
+        availability += router_->congestionStatus(vcIdx);
+        vcCount++;
+      }
+      availability = availability / vcCount;
+      // port not congested or has to take it
+      if (availability > threshold_ || packet->getDetour() <= 0) {
+        bool res = outputPorts->insert(portBase + *itr).second;
+        (void)res;
+        assert(res);
+      }
+    }
+    // can detour and ports all congested
+    if (outputPorts->size() == 0 && packet->getDetour() > 0) {
+      globalOutputPorts->clear();
+      setLocalDst(diffGlobalDims, destinationAddress, globalOutputPorts, _flit);
+      packet->setDetour(packet->getDetour() - 1);
+      ifAtLocalDst(_flit, outputPorts, globalOutputPorts, diffGlobalDims);
+    }
+  }
+}
+
 }  // namespace HierarchicalHyperX

@@ -62,6 +62,9 @@ class Packet {
   void setIntermediate(bool _intermediateDone);
   bool getIntermediateDone();
 
+  u32 getDetour() const;
+  void setDetour(u32 _localDetour);
+
  private:
   u32 id_;
   std::vector<Flit*> flits_;
@@ -77,6 +80,7 @@ class Packet {
 
   u32 globalHopCount_;
   bool intermediateDone_;
+  u32 localDetour_;
 };
 
 #endif  // TYPES_PACKET_H_

@@ -20,7 +20,6 @@
 #include "network/hierarchicalhyperx/GlobalDimOrderRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/AdaptiveRoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/GlobalRandomRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalAndLocalRandomRoutingAlgorithm.h"
 #include "network/RoutingAlgorithm.h"
 
@@ -49,6 +48,8 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
   std::string algorithm = settings_["algorithm"].asString();
   u32 _latency = settings_["latency"].asUInt();
   bool _randomGroup = settings_["random_group"].asBool();
+  f64 congestionThreshold = settings_["congestion_threshold"].asFloat();
+  u32 localDetour = settings_["local_detour"].asUInt();
 
   if (algorithm == "dimension_order") {
     return new HierarchicalHyperX::GlobalDimOrderRoutingAlgorithm(
@@ -60,21 +61,17 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_, _randomGroup);
-  } else if (algorithm == "global_random") {
-    return new HierarchicalHyperX::GlobalRandomRoutingAlgorithm(
-        _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
-        globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_);
   } else if (algorithm == "global_local_random") {
     return new HierarchicalHyperX::GlobalAndLocalRandomRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);
-  } else if (algorithm == "min_adaptive") {
+  } else if (algorithm == "adaptive") {
     return new HierarchicalHyperX::AdaptiveRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_);
+        concentration_, globalLinksPerRouter_,
+        congestionThreshold, localDetour);
   } else {
     fprintf(stderr, "Unknown routing algorithm: '%s'\n", algorithm.c_str());
     assert(false);

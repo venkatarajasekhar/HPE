@@ -36,7 +36,8 @@ class AdaptiveRoutingAlgorithm : public RoutingAlgorithm {
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
-                          u32 _concentration, u32 _globalLinksPerRouter);
+                          u32 _concentration, u32 _globalLinksPerRouter,
+                          f64 _threshold_, u32 _localDetour);
   ~AdaptiveRoutingAlgorithm();
 
  protected:
@@ -55,7 +56,14 @@ class AdaptiveRoutingAlgorithm : public RoutingAlgorithm {
 
   void findPortAvailability(std::vector<u32> diffDims,
     std::unordered_map<u32, f64>* portAvailability,
-    std::vector<u32>* destinationAddress, Flit* _flit);
+    const std::vector<u32>* destinationAddress, Flit* _flit);
+
+  void setLocalDst(std::vector<u32>* diffGlobalDims,
+        const std::vector<u32>* destinationAddress,
+        std::vector<u32>* globalOutputPorts, Flit* _flit);
+
+  void ifAtLocalDst(Flit* _flit, std::unordered_set<u32>* outputPorts,
+     std::vector<u32>* globalOutputPorts, std::vector<u32>* diffGlobalDims);
 
   // Router* router_;
   u32 numVcs_;
@@ -66,6 +74,8 @@ class AdaptiveRoutingAlgorithm : public RoutingAlgorithm {
   const std::vector<u32> localDimWeights_;
   u32 concentration_;
   u32 globalLinksPerRouter_;
+  f64 threshold_;
+  u32 localDetour_;
 };
 
 }  // namespace HierarchicalHyperX
