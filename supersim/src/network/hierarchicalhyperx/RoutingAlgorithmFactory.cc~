@@ -70,7 +70,8 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
     return new HierarchicalHyperX::AdaptiveRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
-        concentration_, globalLinksPerRouter_, congestionThreshold, localDetour);
+        concentration_, globalLinksPerRouter_,
+        congestionThreshold, localDetour);
   } else {
     fprintf(stderr, "Unknown routing algorithm: '%s'\n", algorithm.c_str());
     assert(false);
