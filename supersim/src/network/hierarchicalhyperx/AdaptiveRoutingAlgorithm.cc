@@ -142,6 +142,7 @@ std::unordered_set<u32> AdaptiveRoutingAlgorithm::routing(Flit* _flit,
     if (std::equal(localDst->begin(), localDst->end(),
           routerAddress.begin())) {
       ifAtLocalDst(_flit, &outputPorts, &globalOutputPorts, diffGlobalDims);
+      assert(outputPorts.size() > 0);
     } else {
       // determine the local dimension to work on
       std::vector<u32> diffLocalDims;
@@ -159,7 +160,6 @@ std::unordered_set<u32> AdaptiveRoutingAlgorithm::routing(Flit* _flit,
       (void)res;
       assert(res);
     }
-
   } else {
     // if at the same global virtual router
     // find the port with most availability of all offset dimensions
@@ -191,6 +191,7 @@ std::unordered_set<u32> AdaptiveRoutingAlgorithm::routing(Flit* _flit,
       (void)res;
       assert(res);
     }
+    assert(outputPorts.size() > 0);
   }
   return outputPorts;
 }
@@ -357,15 +358,13 @@ void AdaptiveRoutingAlgorithm::ifAtLocalDst(Flit* _flit,
       reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
   const std::vector<u32>* localDstPort =
       reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
-  dbgprintf("Connected local dst is %s \n",
-               strop::vecString<u32>(*localDst).c_str());
 
   u32 portBase = getPortBase();
   // if at local dst
   if (std::equal(localDst->begin(), localDst->end(),
           routerAddress.begin())) {
     assert(outputPorts->size() == 0);
-    // set output ports to those links
+    // all appropriate ports
     for (auto itr = localDstPort->begin();
          itr != localDstPort->end(); itr++) {
       f64 availability = 0.0;
@@ -392,6 +391,27 @@ void AdaptiveRoutingAlgorithm::ifAtLocalDst(Flit* _flit,
       setLocalDst(diffGlobalDims, destinationAddress, globalOutputPorts, _flit);
       packet->setDetour(packet->getDetour() - 1);
       ifAtLocalDst(_flit, outputPorts, globalOutputPorts, diffGlobalDims);
+      // make sure outputports will be set
+      if (outputPorts->size() == 0) {
+        const std::vector<u32>* localDst =
+          reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
+        u32 localDimensions = localDimWidths_.size();
+        // determine the local dimension to work on
+        std::vector<u32> diffLocalDims;
+        std::unordered_map<u32, f64> portAvailability;
+        for (u32 localDim = 0; localDim < localDimensions; localDim++) {
+          if (routerAddress.at(localDim) != localDst->at(localDim)) {
+            diffLocalDims.push_back(localDim);
+          }
+        }
+        findPortAvailability(diffLocalDims, &portAvailability, localDst,
+                           _flit);
+        // find the port with max availability
+        u32 highestPort = findHighestPort(portAvailability);
+        bool res = outputPorts->insert(highestPort).second;
+        (void)res;
+        assert(res);
+      }
     }
   }
 }
