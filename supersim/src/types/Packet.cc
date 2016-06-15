@@ -25,7 +25,7 @@ Packet::Packet(u32 _id, u32 _numFlits, Message* _message)
     metadata_(U64_MAX), routingExtension_(nullptr),
     localDst_(nullptr), localDstPorts_(nullptr),
     globalHopCount_(0), intermediateDone_(false),
-    localDetour_(0) {
+    localDetour_(0), valiantMode_(false) {
   flits_.resize(_numFlits);
 }
 
@@ -141,4 +141,12 @@ u32 Packet::getDetour() const {
 
 void Packet::setDetour(u32 _localDetour) {
   localDetour_ = _localDetour;
+}
+
+bool Packet::getValiantMode() const {
+  return valiantMode_;
+}
+
+void Packet::setValiantMode(bool _valiantMode) {
+  valiantMode_ = _valiantMode;
 }

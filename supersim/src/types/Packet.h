@@ -65,6 +65,9 @@ class Packet {
   u32 getDetour() const;
   void setDetour(u32 _localDetour);
 
+  bool getValiantMode() const;
+  void setValiantMode(bool _valiantMode);
+
  private:
   u32 id_;
   std::vector<Flit*> flits_;
@@ -81,6 +84,7 @@ class Packet {
   u32 globalHopCount_;
   bool intermediateDone_;
   u32 localDetour_;
+  bool valiantMode_;
 };
 
 #endif  // TYPES_PACKET_H_

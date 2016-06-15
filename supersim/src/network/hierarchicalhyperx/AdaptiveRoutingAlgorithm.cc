@@ -272,8 +272,10 @@ void AdaptiveRoutingAlgorithm::findPortAvailability(
     for (u32 weight = 0; weight < localDimWeights_.at(*itr); weight++) {
       u32 port = portBase + offset + weight;
       f64 availability = 0.0;
-      for (u32 vc = _flit->getPacket()->getGlobalHopCount(); vc < numVcs_;
-           vc += globalDimWidths_.size() + 1) {
+      for (u32 vc = _flit->getPacket()->getHopCount() - 1; vc < numVcs_;
+           vc += (globalDimWidths_.size() + 1)
+                 * localDimWidths_.size() * (1 + localDetour_)
+                 + globalDimWidths_.size()) {
         u32 vcIdx = router_->vcIndex(port, vc);
         availability += router_->congestionStatus(vcIdx);
       }
