@@ -30,7 +30,7 @@
     "routing": {
       "algorithm": "min_adaptive",
       "latency": 1,
-      "congestion_threshold": 0.1,
+      "congestion_threshold": 0.4,
       "local_detour": 1
     },
     "interface": {
