@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NETWORK_HIERARCHICALHYPERX_PROGRESSIVEADAPTIVEROUTINGALGORITHM_H_
-#define NETWORK_HIERARCHICALHYPERX_PROGRESSIVEADAPTIVEROUTINGALGORITHM_H_
+#ifndef NETWORK_HIERARCHICALHYPERX_GLOBALRANDOMROUTINGALGORITHM_H_
+#define NETWORK_HIERARCHICALHYPERX_GLOBALRANDOMROUTINGALGORITHM_H_
 
 #include <prim/prim.h>
 
@@ -23,43 +23,42 @@
 
 #include "event/Component.h"
 #include "network/RoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
 #include "router/Router.h"
 
 namespace HierarchicalHyperX {
 
-class ProgressiveAdaptiveRoutingAlgorithm : public ValiantRoutingAlgorithm {
+class GlobalRandomRoutingAlgorithm : public RoutingAlgorithm {
  public:
-  ProgressiveAdaptiveRoutingAlgorithm(const std::string& _name,
+  GlobalRandomRoutingAlgorithm(const std::string& _name,
                           const Component* _parent,
                           u64 _latency, Router* _router, u32 _numVcs,
                           const std::vector<u32>& _globalDimensionWidths,
                           const std::vector<u32>& _globalDimensionWeights,
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
-                          u32 _concentration, u32 _globalLinksPerRouter,
-                          f64 _threshold_, bool _randomGroup);
-  ~ProgressiveAdaptiveRoutingAlgorithm();
+                          u32 _concentration, u32 _globalLinksPerRouter);
+  ~GlobalRandomRoutingAlgorithm();
 
  protected:
   void processRequest(
       Flit* _flit, RoutingAlgorithm::Response* _response) override;
-
   std::unordered_set<u32> routing(
       Flit* _flit, const std::vector<u32>* destinationAddress);
-
   u32 getPortBase();
-
   void globalPortToLocalAddress(u32 globalPort,
       std::vector<u32>* localAddress, u32* localPortWithoutBase);
 
-  void setLocalDst(u32 globalDim, u32 globalPortBase,
-       const std::vector<u32>* destinationAddress,
-       std::vector<u32>* globalOutputPorts, Flit* _flit);
-
-  f64 threshold_;
+  // Router* router_;
+  u32 numVcs_;
+  u32 numPorts_;
+  const std::vector<u32> globalDimWidths_;
+  const std::vector<u32> globalDimWeights_;
+  const std::vector<u32> localDimWidths_;
+  const std::vector<u32> localDimWeights_;
+  u32 concentration_;
+  u32 globalLinksPerRouter_;
 };
 
 }  // namespace HierarchicalHyperX
 
-#endif  // NETWORK_HIERARCHICALHYPERX_PROGRESSIVEADAPTIVEROUTINGALGORITHM_H_
+#endif  // NETWORK_HIERARCHICALHYPERX_GLOBALRANDOMROUTINGALGORITHM_H_

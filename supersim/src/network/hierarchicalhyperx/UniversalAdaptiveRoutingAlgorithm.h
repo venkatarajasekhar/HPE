@@ -13,8 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#ifndef NETWORK_HIERARCHICALHYPERX_PROGRESSIVEADAPTIVEROUTINGALGORITHM_H_
-#define NETWORK_HIERARCHICALHYPERX_PROGRESSIVEADAPTIVEROUTINGALGORITHM_H_
+#ifndef NETWORK_HIERARCHICALHYPERX_UNIVERSALADAPTIVEROUTINGALGORITHM_H_
+#define NETWORK_HIERARCHICALHYPERX_UNIVERSALADAPTIVEROUTINGALGORITHM_H_
 
 #include <prim/prim.h>
 
@@ -23,14 +23,13 @@
 
 #include "event/Component.h"
 #include "network/RoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
 #include "router/Router.h"
 
 namespace HierarchicalHyperX {
 
-class ProgressiveAdaptiveRoutingAlgorithm : public ValiantRoutingAlgorithm {
+class UniversalAdaptiveRoutingAlgorithm : public RoutingAlgorithm {
  public:
-  ProgressiveAdaptiveRoutingAlgorithm(const std::string& _name,
+  UniversalAdaptiveRoutingAlgorithm(const std::string& _name,
                           const Component* _parent,
                           u64 _latency, Router* _router, u32 _numVcs,
                           const std::vector<u32>& _globalDimensionWidths,
@@ -38,8 +37,8 @@ class ProgressiveAdaptiveRoutingAlgorithm : public ValiantRoutingAlgorithm {
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
                           u32 _concentration, u32 _globalLinksPerRouter,
-                          f64 _threshold_, bool _randomGroup);
-  ~ProgressiveAdaptiveRoutingAlgorithm();
+                          f64 _threshold_, u32 _localDetour);
+  ~UniversalAdaptiveRoutingAlgorithm();
 
  protected:
   void processRequest(
@@ -53,13 +52,32 @@ class ProgressiveAdaptiveRoutingAlgorithm : public ValiantRoutingAlgorithm {
   void globalPortToLocalAddress(u32 globalPort,
       std::vector<u32>* localAddress, u32* localPortWithoutBase);
 
-  void setLocalDst(u32 globalDim, u32 globalPortBase,
-       const std::vector<u32>* destinationAddress,
-       std::vector<u32>* globalOutputPorts, Flit* _flit);
+  u32 findHighestPort(std::unordered_map<u32, f64> portAvailability);
 
+  void findPortAvailability(std::vector<u32> diffDims,
+    std::unordered_map<u32, f64>* portAvailability,
+    const std::vector<u32>* destinationAddress, Flit* _flit);
+
+  void setLocalDst(std::vector<u32>* diffGlobalDims,
+        const std::vector<u32>* destinationAddress,
+        std::vector<u32>* globalOutputPorts, Flit* _flit);
+
+  void ifAtLocalDst(Flit* _flit, std::unordered_set<u32>* outputPorts,
+     std::vector<u32>* globalOutputPorts, std::vector<u32>* diffGlobalDims);
+
+  // Router* router_;
+  u32 numVcs_;
+  u32 numPorts_;
+  const std::vector<u32> globalDimWidths_;
+  const std::vector<u32> globalDimWeights_;
+  const std::vector<u32> localDimWidths_;
+  const std::vector<u32> localDimWeights_;
+  u32 concentration_;
+  u32 globalLinksPerRouter_;
   f64 threshold_;
+  u32 localDetour_;
 };
 
 }  // namespace HierarchicalHyperX
 
-#endif  // NETWORK_HIERARCHICALHYPERX_PROGRESSIVEADAPTIVEROUTINGALGORITHM_H_
+#endif  // NETWORK_HIERARCHICALHYPERX_UNIVERSALADAPTIVEROUTINGALGORITHM_H_
