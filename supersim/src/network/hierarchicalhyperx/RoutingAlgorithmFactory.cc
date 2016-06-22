@@ -19,9 +19,10 @@
 
 #include "network/hierarchicalhyperx/GlobalDimOrderRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/AdaptiveRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/MinimalAdaptiveRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalAndLocalRandomRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalRandomRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/ProgressiveAdaptiveRoutingAlgorithm.h"
 #include "network/RoutingAlgorithm.h"
 
 namespace HierarchicalHyperX {
@@ -72,12 +73,18 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);
-  } else if (algorithm == "adaptive") {
-    return new HierarchicalHyperX::AdaptiveRoutingAlgorithm(
+  } else if (algorithm == "min_adaptive") {
+    return new HierarchicalHyperX::MinimalAdaptiveRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_,
         congestionThreshold, localDetour);
+  } else if (algorithm == "progressive_adaptive") {
+    return new HierarchicalHyperX::ProgressiveAdaptiveRoutingAlgorithm(
+        _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
+        globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
+        concentration_, globalLinksPerRouter_,
+        congestionThreshold, _randomGroup);
   } else {
     fprintf(stderr, "Unknown routing algorithm: '%s'\n", algorithm.c_str());
     assert(false);

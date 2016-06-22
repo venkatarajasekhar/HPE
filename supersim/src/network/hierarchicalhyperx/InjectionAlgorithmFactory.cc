@@ -45,7 +45,10 @@ InjectionAlgorithm* InjectionAlgorithmFactory::createInjectionAlgorithm(
   } else if (algorithm == "global_local_random") {
     return new HierarchicalHyperX::AnyInjectionAlgorithm(
         _name, _parent, _interface, latency, numVcs_);
-  } else if (algorithm == "adaptive") {
+  } else if (algorithm == "min_adaptive") {
+    return new HierarchicalHyperX::AnyInjectionAlgorithm(
+        _name, _parent, _interface, latency, numVcs_);
+  } else if (algorithm == "progressive_adaptive") {
     return new HierarchicalHyperX::AnyInjectionAlgorithm(
         _name, _parent, _interface, latency, numVcs_);
   } else {
