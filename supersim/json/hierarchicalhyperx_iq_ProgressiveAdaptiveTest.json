@@ -9,11 +9,11 @@
     "topology": "hierarchical_hyperx",
     "num_vcs": 18,
     "hierarchy": 2,
-    "global_dimension_widths": [4, 2],
-    "global_dimension_weights": [1, 1],
-    "local_dimension_widths": [2, 2],
+    "global_dimension_widths": [4, 4],
+    "global_dimension_weights": [5, 5],
+    "local_dimension_widths": [4, 4],
     "local_dimension_weights": [1, 1],
-    "global_links_per_router": 1,
+    "global_links_per_router": 2,
     "concentration": 1,
     "internal_local_channel": {
       "latency": 1 // cycles
@@ -30,7 +30,7 @@
     "routing": {
       "algorithm": "progressive_adaptive",
       "latency": 1,
-      "congestion_threshold": 0.4,
+      "congestion_threshold": 0.85,
       "random_group": true
     },
     "interface": {
@@ -105,7 +105,7 @@
       "warmup_window": 15,
       "warmup_attempts": 30,
       "traffic_pattern": {
-        "type": "uniform_random",
+        "type": "bit_complement",
         "send_to_self": false
       }
     },

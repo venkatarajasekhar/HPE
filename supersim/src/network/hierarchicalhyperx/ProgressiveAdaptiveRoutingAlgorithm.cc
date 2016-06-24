@@ -39,8 +39,7 @@ ProgressiveAdaptiveRoutingAlgorithm::ProgressiveAdaptiveRoutingAlgorithm(
      _globalDimensionWeights, _localDimensionWidths, _localDimensionWeights,
      _concentration, _globalLinksPerRouter, _randomGroup),
      threshold_(_threshold) {
-  assert(numVcs_ >= 2 * (globalDimWidths_.size() + 1) * localDimWidths_.size()
-                    + 2 * globalDimWidths_.size() + localDimWidths_.size());
+  assert(numVcs_ >= 2 * localDimWidths_.size() + 2 * globalDimWidths_.size());
 }
 
 ProgressiveAdaptiveRoutingAlgorithm::~ProgressiveAdaptiveRoutingAlgorithm() {}
@@ -66,6 +65,7 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
     assert(outputPorts.size() >= 1);
   } else {
     // use Valiant routing
+    dbgprintf("Valiant mode \n");
     outputPorts = ValiantRoutingAlgorithm::routing(
                   _flit, destinationAddress);
     assert(outputPorts.size() >= 1);
@@ -79,7 +79,12 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
   }
 
   // figure out which VC set to use
-  u32 vcSet = packet->getHopCount() - 1;
+  u32 vcSet;
+  if (packet->getGlobalHopCount() == 0) {
+    vcSet = packet->getHopCount() - 1;
+  } else {
+    vcSet = 2*localDimWidths_.size() - 1 + packet->getGlobalHopCount();
+  }
   dbgprintf("vcset = %u\n", vcSet);
 
   // format the response
@@ -96,9 +101,8 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
     packet->setLocalDstPort(nullptr);
     } else {
       // select VCs in the corresponding set
-      for (u32 vc = vcSet; vc < numVcs_; vc += 2 * (globalDimWidths_.size() + 1)
-           * localDimWidths_.size() + 2 * globalDimWidths_.size()
-           + localDimWidths_.size()) {
+      for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+           + 2 * globalDimWidths_.size()) {
         _response->add(outputPort, vc);
       }
     }
@@ -157,8 +161,7 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
         f64 availability = 0.0;
         u32 vcCount = 0;
         for (u32 vc = packet->getHopCount() - 1; vc < numVcs_;
-             vc += 2 * (globalDimWidths_.size() + 1) * localDimWidths_.size()
-                   + 2 * globalDimWidths_.size() + localDimWidths_.size()) {
+             vc += 2 * localDimWidths_.size() + 2 * globalDimWidths_.size()) {
           u32 vcIdx = router_->vcIndex(portBase + *itr, vc);
           availability += router_->congestionStatus(vcIdx);
           vcCount++;
@@ -175,6 +178,7 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
       // congested, go Valiant
       if (outputPorts.size() == 0) {
         packet->setValiantMode(true);
+        dbgprintf("switched to Valiant mode \n");
         outputPorts = ValiantRoutingAlgorithm::routing(
                              _flit, destinationAddress);
         assert(outputPorts.size() >= 1);
