@@ -85,10 +85,12 @@ void ValiantRoutingAlgorithm::processRequest(
 
 std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
   const std::vector<u32>* destinationAddress) {
+  const std::vector<u32>& routerAddress = router_->getAddress();
   Packet* packet = _flit->getPacket();
-  Message* message = packet->getMessage();
+  // Message* message = packet->getMessage();
   // ex: [c,1,...,m,1,...,n]
-  const std::vector<u32>* destinationAddress = message->getDestinationAddress();
+  // const std::vector<u32>* destinationAddress =
+  // message->getDestinationAddress();
 
   // create the routing extension if needed
   if (packet->getRoutingExtension() == nullptr) {

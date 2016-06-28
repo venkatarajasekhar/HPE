@@ -94,11 +94,11 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
       for (u32 vc = 0; vc < numVcs_; vc++) {
         _response->add(outputPort, vc);
       }
-    assert(_response->size() > 0);
-    // delete the routing extension
-    packet->setRoutingExtension(nullptr);
-    packet->setLocalDst(nullptr);
-    packet->setLocalDstPort(nullptr);
+      assert(_response->size() > 0);
+      // delete the routing extension
+      packet->setRoutingExtension(nullptr);
+      packet->setLocalDst(nullptr);
+      packet->setLocalDstPort(nullptr);
     } else {
       // select VCs in the corresponding set
       f64 availability = 0.0;
