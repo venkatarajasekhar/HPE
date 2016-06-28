@@ -101,19 +101,26 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
       packet->setLocalDstPort(nullptr);
     } else {
       // select VCs in the corresponding set
-      f64 availability = 0.0;
-      u32 vcCount = 0;
-      for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
-           + 2 * globalDimWidths_.size()) {
-        u32 vcIdx = router_->vcIndex(outputPort, vc);
-        availability += router_->congestionStatus(vcIdx);
-        vcCount++;
-        _response->add(outputPort, vc);
-      }
-      availability = availability / vcCount;
-      if (availability <= threshold_) {
-        packet->setValiantMode(true);
-        dbgprintf("switched to Valiant mode \n");
+      if (packet->getValiantMode() == false) {
+        f64 availability = 0.0;
+        u32 vcCount = 0;
+        for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+             + 2 * globalDimWidths_.size()) {
+          u32 vcIdx = router_->vcIndex(outputPort, vc);
+          availability += router_->congestionStatus(vcIdx);
+          vcCount++;
+          _response->add(outputPort, vc);
+        }
+        availability = availability / vcCount;
+        if (availability <= threshold_) {
+          packet->setValiantMode(true);
+          dbgprintf("switched to Valiant mode \n");
+        }
+      } else {
+         for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+             + 2 * globalDimWidths_.size()) {
+          _response->add(outputPort, vc);
+        }
       }
     }
   }
