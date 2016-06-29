@@ -7,7 +7,7 @@
   },
   "network": {
     "topology": "hierarchical_hyperx",
-    "num_vcs": 18,
+    "num_vcs": 20,
     "hierarchy": 2,
     "global_dimension_widths": [4, 4],
     "global_dimension_weights": [5, 5],
@@ -30,7 +30,7 @@
     "routing": {
       "algorithm": "progressive_adaptive",
       "latency": 1,
-      "congestion_threshold": 0.85,
+      "congestion_threshold": 0.9,
       "random_group": true
     },
     "interface": {
@@ -94,7 +94,7 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.4,
+    "max_injection_rate": 0.3,
     "warmup_threshold": 0.99,
     "blast_terminal": {
       "num_messages": 200,
