@@ -119,6 +119,9 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
         availability = availability / vcCount;
         dbgprintf("avaialability = %f\n", availability);
         if (availability <= threshold_) {
+          // reset localdst for valiant
+          packet->setLocalDst(nullptr);
+          packet->setLocalDstPort(nullptr);
           packet->setValiantMode(true);
           dbgprintf("switched to Valiant mode, hop = %u \n",
                  packet->getHopCount());
@@ -199,6 +202,9 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
         packet->setValiantMode(true);
         dbgprintf("switched to Valiant mode, hop = %u \n",
                  packet->getHopCount());
+        // reset localdst for Valiant
+        packet->setLocalDst(nullptr);
+        packet->setLocalDstPort(nullptr);
         outputPorts = ValiantRoutingAlgorithm::routing(
                              _flit, destinationAddress);
         assert(outputPorts.size() >= 1);
