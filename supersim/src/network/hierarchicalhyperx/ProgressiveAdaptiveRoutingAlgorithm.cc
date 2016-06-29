@@ -66,12 +66,13 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
     assert(outputPorts.size() >= 1);
   } else {
     // use Valiant routing
-    printf("Valiant mode \n");
+    dbgprintf("Valiant mode \n");
     outputPorts = ValiantRoutingAlgorithm::routing(
                   _flit, destinationAddress);
     assert(outputPorts.size() >= 1);
   }
 
+  // reset localDst once in a new group
   if (*outputPorts.begin() >= getPortBase()) {
     packet->incrementGlobalHopCount();
     // delete local router
@@ -101,13 +102,12 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
       packet->setLocalDst(nullptr);
       packet->setLocalDstPort(nullptr);
     } else {
-      // select VCs in the corresponding set
       for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
            + 2 * globalDimWidths_.size()) {
         _response->add(outputPort, vc);
       }
-      if (packet->getValiantMode() == false &&
-          packet->getGlobalHopCount() == 0) {
+      // check for congestion of local link in first group
+      if (packet->getValiantMode() == false) {
         f64 availability = 0.0;
         u32 vcCount = 0;
         for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
@@ -183,7 +183,7 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
         f64 availability = 0.0;
         u32 vcCount = 0;
         for (u32 vc = packet->getHopCount() - 1; vc < numVcs_;
-             vc += 2 * localDimWidths_.size() + 2 * globalDimWidths_.size()) {
+             vc += 2 * localDimensions + 2 * globalDimensions) {
           u32 vcIdx = router_->vcIndex(portBase + *itr, vc);
           availability += router_->congestionStatus(vcIdx);
           vcCount++;
