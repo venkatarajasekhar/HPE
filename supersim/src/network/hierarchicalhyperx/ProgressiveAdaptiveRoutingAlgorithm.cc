@@ -58,6 +58,10 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
     assert(packet->getGlobalHopCount() == 0);
   }
 
+  if (packet->getHopCount() == 2) {
+    packet->setValiantMode(true);
+  }
+
   std::unordered_set<u32> outputPorts;
   // routing depends on mode
   if (packet->getValiantMode() == false) {
