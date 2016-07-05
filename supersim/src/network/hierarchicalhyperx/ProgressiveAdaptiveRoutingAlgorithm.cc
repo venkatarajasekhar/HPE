@@ -90,6 +90,7 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
   dbgprintf("vcset = %u\n", vcSet);
 
   // format the response
+  bool switchedToValiant = false;
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
     u32 outputPort = *it;
     if (outputPort < concentration_) {
@@ -102,10 +103,10 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
       packet->setLocalDst(nullptr);
       packet->setLocalDstPort(nullptr);
     } else {
-      for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
-           + 2 * globalDimWidths_.size()) {
-        _response->add(outputPort, vc);
-      }
+      // for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+      //     + 2 * globalDimWidths_.size()) {
+      //  _response->add(outputPort, vc);
+      // }
       // check for congestion of local link in first group
       if (packet->getValiantMode() == false) {
         f64 availability = 0.0;
@@ -123,8 +124,46 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
           packet->setLocalDst(nullptr);
           packet->setLocalDstPort(nullptr);
           packet->setValiantMode(true);
+          switchedToValiant = true;
           dbgprintf("switched to Valiant mode, hop = %u \n",
                  packet->getHopCount());
+        }
+      }
+    }
+  }
+  for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
+    u32 outputPort = *it;
+    if (outputPort >= concentration_) {
+      if (switchedToValiant == false) {
+        for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+             + 2 * globalDimWidths_.size()) {
+          _response->add(outputPort, vc);
+        }
+      }
+    }
+  }
+  if (switchedToValiant == true) {
+    outputPorts = ValiantRoutingAlgorithm::routing(
+                  _flit, destinationAddress);
+    assert(outputPorts.size() >= 1);
+    // reset localDst once in a new group
+    if (*outputPorts.begin() >= getPortBase()) {
+      packet->incrementGlobalHopCount();
+      // delete local router
+      packet->setLocalDst(nullptr);
+      packet->setLocalDstPort(nullptr);
+    }
+    if (packet->getGlobalHopCount() == 0) {
+      vcSet = packet->getHopCount() - 1;
+    } else {
+      vcSet = 2*localDimWidths_.size() - 1 + packet->getGlobalHopCount();
+    }
+    for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
+      u32 outputPort = *it;
+      if (outputPort >= concentration_) {
+        for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+             + 2 * globalDimWidths_.size()) {
+          _response->add(outputPort, vc);
         }
       }
     }
