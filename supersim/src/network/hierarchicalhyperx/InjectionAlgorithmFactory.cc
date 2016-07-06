@@ -51,6 +51,9 @@ InjectionAlgorithm* InjectionAlgorithmFactory::createInjectionAlgorithm(
   } else if (algorithm == "progressive_adaptive") {
     return new HierarchicalHyperX::AnyInjectionAlgorithm(
         _name, _parent, _interface, latency, numVcs_);
+  } else if (algorithm == "PAR") {
+    return new HierarchicalHyperX::AnyInjectionAlgorithm(
+        _name, _parent, _interface, latency, numVcs_);
   } else {
     fprintf(stderr, "Unknown injection algorithm: '%s'\n", algorithm.c_str());
     assert(false);

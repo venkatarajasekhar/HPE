@@ -23,6 +23,7 @@
 #include "network/hierarchicalhyperx/GlobalAndLocalRandomRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalRandomRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ProgressiveAdaptiveRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/PAR.h"
 #include "network/RoutingAlgorithm.h"
 
 namespace HierarchicalHyperX {
@@ -85,6 +86,12 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_,
         congestionThreshold, _randomGroup);
+  } else if (algorithm == "PAR") {
+    return new HierarchicalHyperX::PAR(
+        _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
+        globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
+        concentration_, globalLinksPerRouter_,
+        congestionThreshold);
   } else {
     fprintf(stderr, "Unknown routing algorithm: '%s'\n", algorithm.c_str());
     assert(false);

@@ -210,10 +210,10 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
     const std::vector<u32>* localDstPort =
       reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
 
-    u32 portBase = getPortBase();
     // if router has a global link to destination global router
     if (std::equal(localDst->begin(), localDst->end(),
           routerAddress.begin())) {
+      u32 portBase = getPortBase();
       // find if congested
       assert(outputPorts.size() == 0);
       // all appropriate ports
