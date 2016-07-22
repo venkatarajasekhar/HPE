@@ -60,7 +60,7 @@ void PAR::processRequest(
     packet->setValiantMode(false);
     assert(packet->getGlobalHopCount() == 0);
   }
-  // reset local dst
+  // reset local dst after switching to Valiant mode in first group
   if (packet->getGlobalHopCount() == 0 &&
       packet->getValiantMode() == true) {
     std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
@@ -140,7 +140,7 @@ std::unordered_set<u32> PAR::routing(
   std::vector<u32> globalOutputPorts;
   std::unordered_set<u32> outputPorts;
 
-  // within first non-dst group
+  // within non-dst group
   if (globalDim != globalDimensions) {
     // choose a random local dst
     if (packet->getLocalDst() == nullptr) {
@@ -323,7 +323,7 @@ void PAR::setLocalDst(
   // if no global link, pick a random one
   if (hasGlobalLinkToDst == false) {
     // pick a random global port
-     u32 globalPort = globalOutputPorts->at(gSim->rnd.nextU64(
+    u32 globalPort = globalOutputPorts->at(gSim->rnd.nextU64(
                       0, globalOutputPorts->size() - 1));
 
     // translate global router port number to local router

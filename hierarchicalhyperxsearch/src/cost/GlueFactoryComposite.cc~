@@ -1,0 +1,173 @@
+/*
+ * Copyright (c) 2015, Hewlett-Packard Laboratories, Nic McDonald
+ * See LICENSE file for details
+ */
+#include "cost/GlueFactoryComposite.h"
+
+#include <cassert>
+
+#include <algorithm>
+
+namespace calc {
+
+GlueFactoryComposite::GlueFactoryComposite() {}
+
+GlueFactoryComposite::~GlueFactoryComposite() {}
+
+f64 GlueFactoryComposite::cost(const topos::hyperx::Hyperx& _hyperx)
+    const {
+  // check router radix bounds
+  if (_hyperx.routerRadix < 16 || _hyperx.routerRadix > 64) {
+    fprintf(stderr, "ERROR: router radix is out of bounds for this cost "
+            "calculator\n");
+    assert(false);
+  }
+
+  // number of port types
+  f64 numOpticalPorts = _hyperx.concentration;
+  f64 numElectricalPorts = _hyperx.routerRadix - _hyperx.concentration;
+
+  // CMOS area
+  f64 opticalCmosArea = OPTICAL_SERDES_AREA * numOpticalPorts;
+  f64 electricalCmosArea = ELECTRICAL_SERDES_AREA * numElectricalPorts;
+  f64 routerCmosArea = std::get<0>(ROUTERS.at(_hyperx.routerRadix));
+  f64 switchletCmosArea = opticalCmosArea + electricalCmosArea + routerCmosArea;
+  f64 compositeCmosArea = _hyperx.routers * switchletCmosArea;
+
+  // photonic area
+  f64 mzmPhotonicArea = MZM_AREA * numOpticalPorts;
+  f64 switchletPhotonicArea = mzmPhotonicArea;
+  f64 compositePhotonicArea = _hyperx.routers * switchletPhotonicArea;
+
+  // power
+  /*
+  f64 electricalPower = ELECTRICAL_SERDES_POWER * numElectricalPorts;
+  f64 opticalPower = (OPTICAL_SERDES_POWER + MZM_LASER_POWER) * numOpticalPorts;
+  f64 routerPower = std::get<1>(ROUTERS.at(_hyperx.routerRadix));
+  f64 switchletPower = opticalPower + electricalPower + routerPower;
+  f64 compositePower = _hyperx.routers * switchletPower;
+  */
+
+  // take only the maximum area of the two domains
+  f64 maxArea = std::max(compositeCmosArea, compositePhotonicArea);
+
+  // compute the cost
+  return maxArea;  // * 1000.0 + compositePower * 100;
+}
+
+const std::vector<std::string>& GlueFactoryComposite::extFields() const {
+  return EXT_FIELDS;
+}
+
+std::unordered_map<std::string, std::string> GlueFactoryComposite::extValues(
+    const topos::hyperx::Hyperx& _hyperx) const {
+  // check router radix bounds
+  if (_hyperx.routerRadix < 16 || _hyperx.routerRadix > 64) {
+    fprintf(stderr, "ERROR: router radix is out of bounds for this cost "
+            "calculator\n");
+    assert(false);
+  }
+
+  // number of port types
+  f64 numOpticalPorts = _hyperx.concentration;
+  f64 numElectricalPorts = _hyperx.routerRadix - _hyperx.concentration;
+
+  // CMOS area
+  f64 opticalCmosArea = OPTICAL_SERDES_AREA * numOpticalPorts;
+  f64 electricalCmosArea = ELECTRICAL_SERDES_AREA * numElectricalPorts;
+  f64 routerCmosArea = std::get<0>(ROUTERS.at(_hyperx.routerRadix));
+  f64 switchletCmosArea = opticalCmosArea + electricalCmosArea + routerCmosArea;
+  f64 compositeCmosArea = _hyperx.routers * switchletCmosArea;
+
+  // photonic area
+  f64 mzmPhotonicArea = MZM_AREA * numOpticalPorts;
+  f64 switchletPhotonicArea = mzmPhotonicArea;
+  f64 compositePhotonicArea = _hyperx.routers * switchletPhotonicArea;
+
+  // power
+  f64 electricalPower = ELECTRICAL_SERDES_POWER * numElectricalPorts;
+  f64 opticalPower = (OPTICAL_SERDES_POWER + MZM_LASER_POWER) * numOpticalPorts;
+  f64 routerPower = std::get<1>(ROUTERS.at(_hyperx.routerRadix));
+  f64 switchletPower = opticalPower + electricalPower + routerPower;
+  f64 compositePower = _hyperx.routers * switchletPower;
+
+  // create the return map
+  std::unordered_map<std::string, std::string> values;
+
+  // save area information
+  values["OpticalSerdesCmosArea"] = std::to_string(opticalCmosArea);
+  values["ElectricalSerdesCmosArea"] = std::to_string(electricalCmosArea);
+  values["RouterCmosArea"] = std::to_string(routerCmosArea);
+  values["SwitchletCmosArea"] = std::to_string(switchletCmosArea);
+  values["CompositeCmosArea"] = std::to_string(compositeCmosArea);
+  values["PhotonicArea"] = std::to_string(compositePhotonicArea);
+
+  // power
+  values["ElectricalPower"] = std::to_string(electricalPower);
+  values["OpticalPower"] = std::to_string(opticalPower);
+  values["RouterPower"] = std::to_string(routerPower);
+  values["Power"] = std::to_string(compositePower);
+
+  return values;
+}
+
+const std::vector<std::string> GlueFactoryComposite::EXT_FIELDS = {
+  "OpticalSerdesCmosArea", "ElectricalSerdesCmosArea", "RouterCmosArea",
+  "SwitchletCmosArea", "CompositeCmosArea", "PhotonicArea", "ElectricalPower",
+  "OpticalPower", "RouterPower", "Power"};
+
+// radix -> {area, power}
+const std::unordered_map<u64, std::tuple<f64, f64> >
+GlueFactoryComposite::ROUTERS = {
+  {16, std::tuple<f64, f64>{0.61675,  0.007845237537}},
+  {17, std::tuple<f64, f64>{0.76728,  0.009610890315}},
+  {18, std::tuple<f64, f64>{0.84018,  0.010495081520}},
+  {19, std::tuple<f64, f64>{1.01820,  0.012009967780}},
+  {20, std::tuple<f64, f64>{1.10528,  0.013106454550}},
+  {21, std::tuple<f64, f64>{1.19571,  0.014109626840}},
+  {22, std::tuple<f64, f64>{1.28949,  0.015688116790}},
+  {23, std::tuple<f64, f64>{1.38662,  0.017084252230}},
+  {24, std::tuple<f64, f64>{1.48710,  0.018585121750}},
+  {25, std::tuple<f64, f64>{1.59093,  0.020194863140}},
+  {26, std::tuple<f64, f64>{1.91229,  0.023481164290}},
+  {27, std::tuple<f64, f64>{2.03961,  0.025451812300}},
+  {28, std::tuple<f64, f64>{2.17091,  0.027222948650}},
+  {29, std::tuple<f64, f64>{2.30619,  0.030285091480}},
+  {30, std::tuple<f64, f64>{2.44546,  0.032723725260}},
+  {31, std::tuple<f64, f64>{2.89319,  0.036978279670}},
+  {32, std::tuple<f64, f64>{3.06038,  0.039839765890}},
+  {33, std::tuple<f64, f64>{3.23219,  0.042863464410}},
+  {34, std::tuple<f64, f64>{3.77487,  0.052094485220}},
+  {35, std::tuple<f64, f64>{3.97778,  0.055925494270}},
+  {36, std::tuple<f64, f64>{4.18594,  0.059956643110}},
+  {37, std::tuple<f64, f64>{4.39934,  0.062468848110}},
+  {38, std::tuple<f64, f64>{5.07550,  0.071967669030}},
+  {39, std::tuple<f64, f64>{5.32380,  0.076875821850}},
+  {40, std::tuple<f64, f64>{5.57799,  0.082017730760}},
+  {41, std::tuple<f64, f64>{5.83806,  0.087371852020}},
+  {42, std::tuple<f64, f64>{6.66290,  0.096478342630}},
+  {43, std::tuple<f64, f64>{6.96167,  0.102548886600}},
+  {44, std::tuple<f64, f64>{7.26696,  0.112141027000}},
+  {45, std::tuple<f64, f64>{7.57876,  0.118988437300}},
+  {46, std::tuple<f64, f64>{8.56749,  0.129997796100}},
+  {47, std::tuple<f64, f64>{8.92180,  0.137627842400}},
+  {48, std::tuple<f64, f64>{9.28325,  0.149712558000}},
+  {49, std::tuple<f64, f64>{9.65186,  0.158245624600}},
+  {50, std::tuple<f64, f64>{10.02760, 0.171489595400}},
+  {51, std::tuple<f64, f64>{11.23460, 0.194859646500}},
+  {52, std::tuple<f64, f64>{11.65730, 0.204238557200}},
+  {53, std::tuple<f64, f64>{12.08780, 0.215100873000}},
+  {54, std::tuple<f64, f64>{12.52600, 0.226353160700}},
+  {55, std::tuple<f64, f64>{12.97210, 0.232239157800}},
+  {56, std::tuple<f64, f64>{13.42590, 0.244010756500}},
+  {57, std::tuple<f64, f64>{14.91690, 0.272103295400}},
+  {58, std::tuple<f64, f64>{15.42280, 0.285488203800}},
+  {59, std::tuple<f64, f64>{17.03990, 0.311396152200}},
+  {60, std::tuple<f64, f64>{17.60030, 0.326200524200}},
+  {61, std::tuple<f64, f64>{19.34860, 0.352299703500}},
+  {62, std::tuple<f64, f64>{19.96610, 0.364085671200}},
+  {63, std::tuple<f64, f64>{20.59320, 0.380634256500}},
+  {64, std::tuple<f64, f64>{21.23000, 0.394444212600}}
+};
+
+}  // namespace calc

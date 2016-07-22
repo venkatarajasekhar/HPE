@@ -1,0 +1,119 @@
+/*
+ * Copyright (c) 2015, Nic McDonald
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions are met:
+ *
+ * - Redistributions of source code must retain the above copyright notice, this
+ * list of conditions and the following disclaimer.
+ *
+ * - Redistributions in binary form must reproduce the above copyright notice,
+ * this list of conditions and the following disclaimer in the documentation
+ * and/or other materials provided with the distribution.
+ *
+ * - Neither the name of prim nor the names of its
+ * contributors may be used to endorse or promote products derived from
+ * this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE
+ * LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+#ifndef TOPOS_HIERARCHICALHYPERX_ENGINE_H_
+#define TOPOS_HIERARCHICALHYPERX_ENGINE_H_
+
+#include <prim/prim.h>
+
+#include <deque>
+#include <vector>
+
+namespace topos {
+namespace hierarchicalHyperx {
+
+struct HHyperx {
+  u64 localLinks;
+  u64 globalLinks;
+  u64 localDim;  // L
+  std::vector<u64> localWidths;  // S
+  std::vector<u64> localWeights;  // K
+  u64 globalDim;  // L
+  std::vector<u64> globalWidths;  // S
+  std::vector<u64> globalWeights;  // K
+  u64 routers;  // P
+  u64 routersPerGroup;
+  u64 concentration;  // T
+  u64 terminals;  // N
+  u64 routerRadix;  // R
+  std::vector<f64> bisections;  // B
+  u64 channels;
+  u64 localChannels;
+  u64 globalChannels;
+  f64 cost;
+};
+
+class CostFunction {
+ public:
+  CostFunction();
+  virtual ~CostFunction();
+  virtual f64 cost(const HHyperx& _hierarchicalHyperx) const = 0;
+};
+
+class Comparator {
+ public:
+  bool operator()(const HHyperx& _lhs,
+                  const HHyperx& _rhs) const;
+};
+
+class Engine {
+ public:
+  Engine(u64 _minLocalDim, u64 _maxLocalDim, u64 _minGlobalDim,
+         u64 _maxGlobalDim, u64 _minRadix, u64 _maxRadix,
+         u64 _minConcentration, u64 _maxConcentration, u64 _minTerminals,
+         u64 _maxTerminals, f64 _minBandwidth, bool _fixedWidth,
+         bool _fixedWeight, u64 _maxResults, const CostFunction* _costFunction);
+  ~Engine();
+
+  void run();
+  const std::deque<HHyperx>& results() const;
+
+ private:
+  u64 minLocalDim_;
+  u64 maxLocalDim_;
+  u64 minGlobalDim_;
+  u64 maxGlobalDim_;
+  u64 minRadix_;
+  u64 maxRadix_;
+  u64 minConcentration_;
+  u64 maxConcentration_;
+  u64 minTerminals_;
+  u64 maxTerminals_;
+  f64 minBandwidth_;
+  bool fixedWidth_;
+  bool fixedWeight_;
+  u64 maxResults_;
+  const CostFunction* costFunction_;
+  Comparator comparator_;
+  HHyperx hHyperx_;
+  std::deque<HHyperx> results_;
+
+  void stage1();
+  void stage2();
+  void stage3();
+  void stage4();
+  void stage5();
+  void stage6();
+};
+
+}  // namespace hierarchicalHyperx
+}  // namespace topos
+
+#endif  // TOPOS_HIERARCHICALHYPERX_ENGINE_H_
