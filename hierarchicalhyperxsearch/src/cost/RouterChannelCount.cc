@@ -38,8 +38,21 @@ RouterChannelCount::~RouterChannelCount() {}
 
 f64 RouterChannelCount::cost(const topos::hierarchicalHyperx::HHyperx&
                              _hHyperx) const {
-  return _hHyperx.routers + _hHyperx.globalChannels * 0.0000001
-         + _hHyperx.localChannels * 0.000000001;
+  f64 globalCost = 0.000001;
+  f64 localCost =  0.00000001;
+  f64 cost = _hHyperx.routers + _hHyperx.globalChannels * globalCost
+             + _hHyperx.localChannels * localCost;
+  // if (_hHyperx.globalDim > 1) {
+  // cost += ((_hHyperx.globalWidths.at(0) - 1) * _hHyperx.globalWeights.at(0) -
+  //         (_hHyperx.globalWidths.at(1) - 1) * _hHyperx.globalWeights.at(1)) *
+  //          globalCost;
+  // }
+  // if (_hHyperx.localDim > 1) {
+  // cost += ((_hHyperx.localWidths.at(0) - 1) * _hHyperx.localWeights.at(0) -
+  //           (_hHyperx.localWidths.at(1) - 1) * _hHyperx.localWeights.at(1)) *
+  //          localCost;
+  // }
+  return cost;
 }
 
 }  // namespace calc

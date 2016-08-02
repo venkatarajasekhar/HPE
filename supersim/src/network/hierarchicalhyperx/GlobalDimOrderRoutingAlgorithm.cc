@@ -39,7 +39,8 @@ GlobalDimOrderRoutingAlgorithm::GlobalDimOrderRoutingAlgorithm(
       localDimWeights_(_localDimensionWeights),
       concentration_(_concentration),
       globalLinksPerRouter_(_globalLinksPerRouter) {
-  assert(numVcs_ >= globalDimWidths_.size() + 1);
+  assert(numVcs_ >=  (globalDimWidths_.size() + 1)
+           * localDimWidths_.size() + globalDimWidths_.size());
 }
 
 GlobalDimOrderRoutingAlgorithm::~GlobalDimOrderRoutingAlgorithm() {}
@@ -60,9 +61,8 @@ void GlobalDimOrderRoutingAlgorithm::processRequest(
     _flit->getPacket()->setLocalDstPort(nullptr);
   }
   // figure out which VC set to use
-  u32 vcSet = _flit->getPacket()->getGlobalHopCount();
+  u32 vcSet = _flit->getPacket()->getHopCount() - 1;
   dbgprintf("current vcset %u \n", vcSet);
-  assert(vcSet <= globalDimWidths_.size() + 1);
 
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
@@ -74,7 +74,8 @@ void GlobalDimOrderRoutingAlgorithm::processRequest(
       }
     } else {
       // select VCs in the corresponding set
-      for (u32 vc = vcSet; vc < numVcs_; vc += globalDimWidths_.size() + 1) {
+      for (u32 vc = vcSet; vc < numVcs_; vc += (globalDimWidths_.size() + 1)
+           * localDimWidths_.size() + globalDimWidths_.size()) {
         _response->add(outputPort, vc);
       }
     }
@@ -176,6 +177,8 @@ std::unordered_set<u32> GlobalDimOrderRoutingAlgorithm::routing(Flit* _flit,
       reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
     dbgprintf("Connected local dst is %s \n",
                strop::vecString<u32>(*localDst).c_str());
+    dbgprintf("local dst port is %s \n",
+               strop::vecString<u32>(*localDstPort).c_str());
 
     u32 portBase = getPortBase();
     // if router has a global link to destination global router

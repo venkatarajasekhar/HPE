@@ -130,32 +130,30 @@ void Engine::stage1() {
                                + hHyperx_.concentration;
 
         // check radix requirment
-        if (hHyperx_.routerRadix < minRadix_ ||
-            hHyperx_.routerRadix > maxRadix_) {
-          continue;
+        if (hHyperx_.routerRadix >= minRadix_ &&
+            hHyperx_.routerRadix <= maxRadix_) {
+          /*
+           * generate possible dimension widths
+          */
+          hHyperx_.localWidths.clear();
+          hHyperx_.localWidths.resize(hHyperx_.localDim, 2);
+
+          // find the maximum width of local dimension
+          u64 maxLocalWidth = hHyperx_.localLinks - hHyperx_.localDim + 2;
+          if (maxLocalWidth < 2) {
+            break;
+          }
+
+          stage2();
         }
-
-        /*
-         * generate possible dimension widths
-        */
-        hHyperx_.localWidths.clear();
-        hHyperx_.localWidths.resize(hHyperx_.localDim, 2);
-
-        // find the maximum width of local dimension
-        u64 maxLocalWidth = hHyperx_.localLinks - hHyperx_.localDim + 2;
-        if (maxLocalWidth < 2) {
-          break;
-        }
-
-        stage2();
       }  // end of concentration loop
     }  // end of localDim loop
   }  // end of globalDim loop
 }
 
 void Engine::stage2() {
-  printf("localDim = %lu, globalDim = %lu, concentration = %lu\n",
-         hHyperx_.localDim, hHyperx_.globalDim, hHyperx_.concentration);
+  // printf("localDim = %lu, globalDim = %lu, concentration = %lu\n",
+  //       hHyperx_.localDim, hHyperx_.globalDim, hHyperx_.concentration);
   u64 maxLocalWidth = hHyperx_.localLinks - hHyperx_.localDim + 2;
   // loop through local widths
   while (true) {
@@ -277,15 +275,16 @@ void Engine::stage4() {
     }
     if (totalLocalLinks == hHyperx_.localLinks) {
       if (hHyperx_.localDim > 1) {
-        u64 firstDimLinks = hHyperx_.localWidths.at(0) *
-                            hHyperx_.localWeights.at(0);
-        u64 secondDimLinks = hHyperx_.localWidths.at(1) *
-                             hHyperx_.localWeights.at(1);
+        // u64 firstDimLinks = (hHyperx_.localWidths.at(0) - 1) *
+        //                     hHyperx_.localWeights.at(0);
+        // u64 secondDimLinks = (hHyperx_.localWidths.at(1) - 1) *
+        //                      hHyperx_.localWeights.at(1);
         // if (firstDimLinks <= 2 * secondDimLinks
-        //    && secondDimLinks <= 2 * firstDimLinks) {
-        if (firstDimLinks == secondDimLinks) {
-          stage5();
-        }
+        //     && secondDimLinks <= firstDimLinks) {
+        if (hHyperx_.localWeights.at(0) == hHyperx_.localWidths.at(1)
+                                         * hHyperx_.localWeights.at(1)) {
+             stage5();
+         }
       } else {
         stage5();
       }
@@ -334,14 +333,15 @@ void Engine::stage5() {
     }
     if (totalGlobalLinks == hHyperx_.globalLinks * hHyperx_.routersPerGroup) {
       if (hHyperx_.globalDim > 1) {
-        u64 firstDimLinks = hHyperx_.globalWidths.at(0) *
-                            hHyperx_.globalWeights.at(0);
-        u64 secondDimLinks = hHyperx_.globalWidths.at(1) *
-                            hHyperx_.globalWeights.at(1);
+        // u64 firstDimLinks = (hHyperx_.globalWidths.at(0) - 1) *
+        //                    hHyperx_.globalWeights.at(0);
+        // u64 secondDimLinks = (hHyperx_.globalWidths.at(1) - 1) *
+        //                     hHyperx_.globalWeights.at(1);
         // if (firstDimLinks <= 2 * secondDimLinks
         //    && secondDimLinks <= 2 * firstDimLinks) {
-        if (firstDimLinks == secondDimLinks) {
-          stage6();
+        if (hHyperx_.globalWeights.at(0) == hHyperx_.globalWidths.at(1)
+                                         * hHyperx_.globalWeights.at(1)) {
+           stage6();
         }
       } else {
         stage6();

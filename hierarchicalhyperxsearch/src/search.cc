@@ -218,9 +218,9 @@ s32 main(s32 _argc, char** _argv) {
   grid.set(0, 4, "GlobalDim");
   grid.set(0, 5, "GlobalWidths");
   grid.set(0, 6, "GlobalWeights");
-  grid.set(0, 7, "Routers");
-  grid.set(0, 8, "RouterLocalChanels");
-  grid.set(0, 9, "RouterGlobalChanels");
+  grid.set(0, 7, "Switchlets");
+  grid.set(0, 8, "SwitchletLocalChanels");
+  grid.set(0, 9, "SwitchletGlobalChanels");
   grid.set(0, 10, "Concentration");
   grid.set(0, 11, "Radix");
   grid.set(0, 12, "Terminals");
