@@ -24,6 +24,7 @@
 #include "traffic/ScanTrafficPattern.h"
 #include "traffic/TornadoTrafficPattern.h"
 #include "traffic/UniformRandomTrafficPattern.h"
+#include "traffic/DragonflyWC.h"
 
 TrafficPattern* TrafficPatternFactory::createTrafficPattern(
     const std::string& _name, const Component* _parent, u32 _numTerminals,
@@ -50,6 +51,9 @@ TrafficPattern* TrafficPatternFactory::createTrafficPattern(
         _name, _parent, _numTerminals, _self, _settings);
   } else if (type == "tornado") {
     return new TornadoTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "dragonfly_wc") {
+    return new DragonflyWC(
         _name, _parent, _numTerminals, _self, _settings);
   } else {
     fprintf(stderr, "unknown traffic pattern: %s\n", type.c_str());

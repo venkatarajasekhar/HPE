@@ -117,13 +117,14 @@ std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
   // intermediate address info
   const std::vector<u32>* intermediateAddress =
       reinterpret_cast<const std::vector<u32>*>(packet->getRoutingExtension());
-
-  dbgprintf("VAL:Router address is %s \n",
+  if (packet->getHopCount() == 1) {
+    dbgprintf("VAL:Router address is %s \n",
          strop::vecString<u32>(routerAddress).c_str());
-  dbgprintf("VAL: final dst address is %s \n",
+    dbgprintf("VAL: final dst address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
-  dbgprintf("Intermediate address is %s \n",
+    dbgprintf("Intermediate address is %s \n",
          strop::vecString<u32>(*intermediateAddress).c_str());
+  }
   assert(routerAddress.size() == destinationAddress->size() - 1);
   assert(routerAddress.size() == intermediateAddress->size() - 1);
 

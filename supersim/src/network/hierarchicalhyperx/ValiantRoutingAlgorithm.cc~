@@ -148,7 +148,7 @@ std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
   if (packet->getIntermediateDone() == false) {
     outputPorts = GlobalDimOrderRoutingAlgorithm::routing(
                   _flit, intermediateAddress);
-    assert(packet->getGlobalHopCount() < globalDimWidths_.size() + 1);
+    // assert(packet->getGlobalHopCount() < globalDimWidths_.size() + 1);
   } else {
     outputPorts = GlobalDimOrderRoutingAlgorithm::routing(
                   _flit, destinationAddress);
