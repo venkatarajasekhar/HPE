@@ -35,5 +35,6 @@ u32 DragonflyWC::nextDestination() {
   if (currentGroup < groupNumber - 1) {
     dest += groupSize * (currentGroup + 1);
   }
+  dest *= concentration;
   return dest;
 }
