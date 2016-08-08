@@ -230,6 +230,9 @@ Network::Network(const std::string& _name, const Component* _parent,
           assert(srcLocalAddress.size() == localDimensions_);
           u32 srcPort = virtualGlobalSrcPort / numRoutersPerGlobalRouter;
           assert(srcPort < globalLinksPerRouter_);
+          dbgprintf("global port = %u, local router address = %s \n",
+                   virtualGlobalSrcPort,
+                   strop::vecString<u32>(srcLocalAddress).c_str());
 
           std::vector<u32> dstLocalAddress(localDimensions_);
           product = 1;

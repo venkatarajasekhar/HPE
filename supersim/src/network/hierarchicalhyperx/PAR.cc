@@ -39,8 +39,9 @@ PAR::PAR(
       _globalDimensionWeights, _localDimensionWidths, _localDimensionWeights,
       _concentration, _globalLinksPerRouter),
       threshold_(_threshold) {
-  assert(numVcs_ >= localDimWidths_.size() * (globalDimWidths_.size() + 1)
-                    + globalDimWidths_.size() + 1);
+  // every VC per hop
+  assert(numVcs_ >= localDimWidths_.size() * (globalDimWidths_.size() + 1) + 1
+                    + globalDimWidths_.size() + 1 + 1);
 }
 
 PAR::~PAR() {}
@@ -55,11 +56,15 @@ void PAR::processRequest(
   u32 localDimensions = localDimWidths_.size();
   dbgprintf("Destination address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
+  dbgprintf("Present address is %s \n",
+         strop::vecString<u32>(routerAddress).c_str());
+  std::unordered_set<u32> outputPorts;
 
   if (packet->getHopCount() == 1) {
     packet->setValiantMode(false);
     assert(packet->getGlobalHopCount() == 0);
   }
+
   // reset local dst after switching to Valiant mode in first group
   if (packet->getGlobalHopCount() == 0 &&
       packet->getValiantMode() == true) {
@@ -72,11 +77,18 @@ void PAR::processRequest(
     std::vector<u32>* dstPort = new std::vector<u32>;
     dstPort->push_back(globalPort);
     packet->setLocalDstPort(dstPort);
-  }
 
-  std::unordered_set<u32> outputPorts;
+    for (auto itr = dstPort->begin();
+             itr != dstPort->end(); itr++) {
+      u32 portBase = getPortBase();
+      bool res = outputPorts.insert(portBase + *itr).second;
+      (void)res;
+      assert(res);
+    }
+  } else {
   // routing depends on mode
-  outputPorts = PAR::routing(_flit, destinationAddress);
+    outputPorts = PAR::routing(_flit, destinationAddress);
+  }
   assert(outputPorts.size() >= 1);
 
   // reset localDst once in a new group
@@ -104,8 +116,8 @@ void PAR::processRequest(
       packet->setLocalDstPort(nullptr);
     } else {
       for (u32 vc = vcSet; vc < numVcs_; vc += localDimWidths_.size()
-                    * (globalDimWidths_.size() + 1)
-                    + globalDimWidths_.size() + 1) {
+                    * (globalDimWidths_.size() + 1) + 1
+                    + globalDimWidths_.size() + 1 + 1) {
         _response->add(outputPort, vc);
       }
     }
@@ -140,8 +152,8 @@ std::unordered_set<u32> PAR::routing(
   std::vector<u32> globalOutputPorts;
   std::unordered_set<u32> outputPorts;
 
-  // within non-dst group
-  if (globalDim != globalDimensions) {
+  // within first non-dst group
+  if (packet->getGlobalHopCount() == 0 && globalDim != globalDimensions) {
     // choose a random local dst
     if (packet->getLocalDst() == nullptr) {
       setLocalDst(globalDim, globalPortBase,
@@ -160,23 +172,32 @@ std::unordered_set<u32> PAR::routing(
           packet->getValiantMode() == false) {
         for (auto itr = localDstPort->begin();
              itr != localDstPort->end(); itr++) {
-          u32 outputPort = *itr;
+	  // make sure we are reffering to the right outputPort
+          u32 outputPort = *itr + getPortBase();
           f64 availability = 0.0;
           u32 vcCount = 0;
           for (u32 vc = packet->getHopCount() - 1; vc < numVcs_;
-               vc += localDimWidths_.size() * (globalDimWidths_.size() + 1)
-                   + globalDimWidths_.size() + 1) {
+               vc += localDimWidths_.size() * (globalDimWidths_.size() + 1) + 1
+                    + globalDimWidths_.size() + 1 + 1) {
             u32 vcIdx = router_->vcIndex(outputPort, vc);
-            availability += router_->congestionStatus(vcIdx);
+            f64 vcStatus = router_->congestionStatus(vcIdx);
+            if (routerAddress.at(0) == 0 && vcStatus <= threshold_) {
+     dbgprintf("router = %s, outputPort= %u, vc idx = %u, avaialability = %f\n",
+     strop::vecString<u32>(routerAddress).c_str(), outputPort, vcIdx, vcStatus);
+            }
+            availability += vcStatus;
             vcCount++;
           }
           availability = availability / vcCount;
-          dbgprintf("avaialability = %f\n", availability);
           if (availability <= threshold_) {
+            dbgprintf("current router = %s \n",
+              strop::vecString<u32>(routerAddress).c_str());
+            dbgprintf("avaialability = %f\n", availability);
             // reset localdst for valiant
             packet->setLocalDst(nullptr);
             packet->setLocalDstPort(nullptr);
             packet->setValiantMode(true);
+            dbgprintf("switched to valiant \n");
             // pick a random local port
             u32 localPort = gSim->rnd.nextU64(
                             concentration_, getPortBase() - 1);

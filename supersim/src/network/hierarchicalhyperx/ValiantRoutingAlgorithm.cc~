@@ -95,7 +95,7 @@ std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
   // create the routing extension if needed
   if (packet->getRoutingExtension() == nullptr) {
     // should be first router encountered
-    // assert(packet->getHopCount() == 1);
+    assert(packet->getHopCount() == 1);
 
     // create routing extension header
     //  the extension is a vector with one dummy element then the address of the
@@ -117,32 +117,27 @@ std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
   // intermediate address info
   const std::vector<u32>* intermediateAddress =
       reinterpret_cast<const std::vector<u32>*>(packet->getRoutingExtension());
-
-  dbgprintf("VAL:Router address is %s \n",
+  if (packet->getHopCount() == 1) {
+    dbgprintf("VAL:Router address is %s \n",
          strop::vecString<u32>(routerAddress).c_str());
-  dbgprintf("VAL: final dst address is %s \n",
+    dgbprintf("VAL: final dst address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
-  dbgprintf("Intermediate address is %s \n",
+    dbgprintf("Intermediate address is %s \n\n",
          strop::vecString<u32>(*intermediateAddress).c_str());
+  }
   assert(routerAddress.size() == destinationAddress->size() - 1);
   assert(routerAddress.size() == intermediateAddress->size() - 1);
 
   // update intermediate info for Valiant
-  if (randomGroup_ == true) {
+  if (packet->getIntermediateDone() == false) {
     const std::vector<u32> intermediateGroup(intermediateAddress->begin() +
                        localDimWidths_.size() + 1, intermediateAddress->end());
     if (std::equal(routerAddress.begin() + localDimWidths_.size(),
                    routerAddress.end(), intermediateGroup.begin())) {
       packet->setIntermediate(true);
     }
-  } else {
-    const std::vector<u32> intermediateRouter(intermediateAddress->begin()
-                                     + 1, intermediateAddress->end());
-    if (std::equal(routerAddress.begin(), routerAddress.end(),
-                   intermediateRouter.begin())) {
-      packet->setIntermediate(true);
-    }
   }
+
   std::unordered_set<u32> outputPorts;
   // first stage of valiant
   if (packet->getIntermediateDone() == false) {

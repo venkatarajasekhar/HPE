@@ -123,7 +123,7 @@ Network::Network(const std::string& _name, const Component* _parent,
     routers_.at(routerAddress) = RouterFactory::createRouter(
       routerName, this, routerAddress, routingAlgorithmFactory,
       _settings["router"]);
-    printf("routerAddress = %s",
+    dbgprintf("routerAddress = %s",
             strop::vecString<u32>(routerAddress).c_str());
     // set the router's address
     // routers_.at(routerAddress)->setAddress(routerAddress);
