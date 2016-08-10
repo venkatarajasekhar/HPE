@@ -172,7 +172,7 @@ std::unordered_set<u32> PAR::routing(
           packet->getValiantMode() == false) {
         for (auto itr = localDstPort->begin();
              itr != localDstPort->end(); itr++) {
-	  // make sure we are reffering to the right outputPort
+          // make sure we are reffering to the right outputPort
           u32 outputPort = *itr + getPortBase();
           f64 availability = 0.0;
           u32 vcCount = 0;
@@ -181,10 +181,6 @@ std::unordered_set<u32> PAR::routing(
                     + globalDimWidths_.size() + 1 + 1) {
             u32 vcIdx = router_->vcIndex(outputPort, vc);
             f64 vcStatus = router_->congestionStatus(vcIdx);
-            if (routerAddress.at(0) == 0 && vcStatus <= threshold_) {
-     dbgprintf("router = %s, outputPort= %u, vc idx = %u, avaialability = %f\n",
-     strop::vecString<u32>(routerAddress).c_str(), outputPort, vcIdx, vcStatus);
-            }
             availability += vcStatus;
             vcCount++;
           }
@@ -204,7 +200,7 @@ std::unordered_set<u32> PAR::routing(
             // send using the local port
             bool res = outputPorts.insert(localPort).second;
             (void)res;
-            assert(res);
+            // assert(res);
           }
         }
         // not congested

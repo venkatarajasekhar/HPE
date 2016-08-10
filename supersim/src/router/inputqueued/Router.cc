@@ -161,6 +161,7 @@ void Router::sendCredit(u32 _port, u32 _vc) {
 }
 
 void Router::sendFlit(u32 _port, Flit* _flit) {
+  assert(outputChannels_.at(_port));
   assert(outputChannels_.at(_port)->getNextFlit() == nullptr);
   outputChannels_.at(_port)->setNextFlit(_flit);
   congestionStatus_->decrement(vcIndex(_port, _flit->getVc()));
