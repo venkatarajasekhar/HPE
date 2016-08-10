@@ -120,7 +120,7 @@ std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
   if (packet->getHopCount() == 1) {
     dbgprintf("VAL:Router address is %s \n",
          strop::vecString<u32>(routerAddress).c_str());
-    dgbprintf("VAL: final dst address is %s \n",
+    dbgprintf("VAL: final dst address is %s \n",
          strop::vecString<u32>(*destinationAddress).c_str());
     dbgprintf("Intermediate address is %s \n\n",
          strop::vecString<u32>(*intermediateAddress).c_str());
