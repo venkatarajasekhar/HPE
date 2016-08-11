@@ -339,6 +339,7 @@ void Engine::stage5() {
         //                     hHyperx_.globalWeights.at(1);
         // if (firstDimLinks <= 2 * secondDimLinks
         //    && secondDimLinks <= 2 * firstDimLinks) {
+        // compensate for stronger demands horizontally
         if (hHyperx_.globalWeights.at(0) == hHyperx_.globalWidths.at(1)
                                          * hHyperx_.globalWeights.at(1)) {
           stage6();

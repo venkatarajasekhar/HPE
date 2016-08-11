@@ -68,6 +68,7 @@ void GlobalAndLocalRandomRoutingAlgorithm::processRequest(
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
     dbgprintf("output port is %u \n", *it);
     u32 outputPort = *it;
+    assert(outputPort < getPortBase() + globalLinksPerRouter_);
     if (outputPort < concentration_) {
       for (u32 vc = 0; vc < numVcs_; vc++) {
         _response->add(outputPort, vc);
@@ -193,6 +194,7 @@ std::unordered_set<u32> GlobalAndLocalRandomRoutingAlgorithm::routing
       // set output ports to those links
       for (auto itr = localDstPort->begin();
            itr != localDstPort->end(); itr++) {
+        assert(*itr < globalLinksPerRouter_);
         bool res = outputPorts.insert(portBase + *itr).second;
         (void)res;
         assert(res);
@@ -209,8 +211,8 @@ std::unordered_set<u32> GlobalAndLocalRandomRoutingAlgorithm::routing
                                       diffLocalDims.size() - 1));
       u32 portBase = concentration_;
       for (u32 tmp = 0; tmp < localDim; tmp++) {
-        portBase += ((localDimWidths_.at(localDim) - 1)
-                     * localDimWeights_.at(localDim));
+        portBase += ((localDimWidths_.at(tmp) - 1)
+                     * localDimWeights_.at(tmp));
       }
       // more local router-to-router hops needed
       u32 src = routerAddress.at(localDim);
@@ -222,6 +224,8 @@ std::unordered_set<u32> GlobalAndLocalRandomRoutingAlgorithm::routing
       // add all ports where the two routers are connecting
       for (u32 weight = 0; weight < localDimWeights_.at(localDim);
            weight++) {
+        assert(portBase + offset + weight <
+               getPortBase() + globalLinksPerRouter_);
         bool res = outputPorts.insert(portBase + offset + weight).second;
         (void)res;
         assert(res);
@@ -252,8 +256,8 @@ std::unordered_set<u32> GlobalAndLocalRandomRoutingAlgorithm::routing
                                       diffLocalDims.size() - 1));
       u32 portBase = concentration_;
       for (u32 tmp = 0; tmp < localDim; tmp++) {
-        portBase += ((localDimWidths_.at(localDim) - 1)
-                     * localDimWeights_.at(localDim));
+        portBase += ((localDimWidths_.at(tmp) - 1)
+                     * localDimWeights_.at(tmp));
       }
       // more local router-to-router hops needed
       u32 src = routerAddress.at(localDim);
@@ -265,6 +269,8 @@ std::unordered_set<u32> GlobalAndLocalRandomRoutingAlgorithm::routing
       // add all ports where the two routers are connecting
       for (u32 weight = 0; weight < localDimWeights_.at(localDim);
            weight++) {
+        assert(portBase + offset + weight <
+               getPortBase() + globalLinksPerRouter_);
         bool res = outputPorts.insert(portBase + offset + weight).second;
         (void)res;
         assert(res);
