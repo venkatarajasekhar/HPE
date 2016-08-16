@@ -95,7 +95,7 @@ std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
   // create the routing extension if needed
   if (packet->getRoutingExtension() == nullptr) {
     // should be first router encountered
-    assert(packet->getHopCount() == 1);
+    // assert(packet->getHopCount() == 1);
 
     // create routing extension header
     //  the extension is a vector with one dummy element then the address of the

@@ -130,10 +130,10 @@ std::unordered_set<u32> ValiantRoutingAlgorithm::routing(Flit* _flit,
 
   // update intermediate info for Valiant
   if (packet->getIntermediateDone() == false) {
-    const std::vector<u32> intermediateGroup(intermediateAddress->begin() +
-                       localDimWidths_.size() + 1, intermediateAddress->end());
-    if (std::equal(routerAddress.begin() + localDimWidths_.size(),
-                   routerAddress.end(), intermediateGroup.begin())) {
+    const std::vector<u32> intermediateNode(intermediateAddress->begin() +
+                                        + 1, intermediateAddress->end());
+    if (std::equal(routerAddress.begin(),
+                   routerAddress.end(), intermediateNode.begin())) {
       packet->setIntermediate(true);
     }
   }

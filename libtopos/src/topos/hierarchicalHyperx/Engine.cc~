@@ -281,6 +281,7 @@ void Engine::stage4() {
         //                      hHyperx_.localWeights.at(1);
         // if (firstDimLinks <= 2 * secondDimLinks
         //     && secondDimLinks <= firstDimLinks) {
+        // fatter link horizontally as for DOR
         if (hHyperx_.localWeights.at(0) == hHyperx_.localWidths.at(1)
                                          * hHyperx_.localWeights.at(1)) {
              stage5();
@@ -345,8 +346,10 @@ void Engine::stage5() {
           stage6();
         }
       } else if (hHyperx_.globalDim == 2  && hHyperx_.localDim == 2) {
-        if (((hHyperx_.globalWidths.at(0) - 1) * hHyperx_.globalWeights.at(0))
-            % hHyperx_.routersPerGroup == 0 &&
+        if (  // ((hHyperx_.globalWidths.at(0) - 1)
+            // * hHyperx_.globalWeights.at(0))
+            // % hHyperx_.routersPerGroup == 0 &&
+            // fatter global link horizontally
              hHyperx_.globalWeights.at(0) == hHyperx_.globalWidths.at(1)
              * hHyperx_.globalWeights.at(1)) {
           stage6();

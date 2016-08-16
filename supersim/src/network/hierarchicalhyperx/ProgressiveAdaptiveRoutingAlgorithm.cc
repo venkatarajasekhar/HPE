@@ -104,27 +104,25 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
       packet->setLocalDstPort(nullptr);
     } else {
       // check for congestion
-    //   if (packet->getValiantMode() == false) {
-    //     f64 availability = 0.0;
-    //     u32 vcCount = 0;
-    //     for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
-    //          + 2 * globalDimWidths_.size()) {
-    //       u32 vcIdx = router_->vcIndex(outputPort, vc);
-    //       availability += router_->congestionStatus(vcIdx);
-    //       vcCount++;
-    //     }
-    //     availability = availability / vcCount;
-    //     dbgprintf("avaialability = %f\n", availability);
-    //     if (availability <= threshold_) {
-    //       // reset localdst for valiant
-    //       packet->setLocalDst(nullptr);
-    //       packet->setLocalDstPort(nullptr);
-    //       packet->setValiantMode(true);
-    //       switchedToValiant = true;
-    //       dbgprintf("switched to Valiant mode, hop = %u \n",
-    //              packet->getHopCount());
-    //     }
-    //   }
+      if (packet->getValiantMode() == false
+          && packet->getGlobalHopCount() == 0) {
+        f64 availability = 0.0;
+        u32 vcCount = 0;
+        for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+             + 2 * globalDimWidths_.size()) {
+          u32 vcIdx = router_->vcIndex(outputPort, vc);
+          availability += router_->congestionStatus(vcIdx);
+          vcCount++;
+        }
+        availability = availability / vcCount;
+        if (availability <= threshold_) {
+          // reset localdst for valiant
+          packet->setLocalDst(nullptr);
+          packet->setLocalDstPort(nullptr);
+          packet->setValiantMode(true);
+          switchedToValiant = true;
+        }
+      }
     }
   }
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
@@ -138,32 +136,32 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
       }
     }
   }
-  // if (switchedToValiant == true) {
-  //   outputPorts = ValiantRoutingAlgorithm::routing(
-  //                 _flit, destinationAddress);
-  //   assert(outputPorts.size() >= 1);
-  //   // reset localDst once in a new group
-  //   if (*outputPorts.begin() >= getPortBase()) {
-  //     packet->incrementGlobalHopCount();
-  //     // delete local router
-  //     packet->setLocalDst(nullptr);
-  //     packet->setLocalDstPort(nullptr);
-  //   }
-  //   if (packet->getGlobalHopCount() == 0) {
-  //     vcSet = packet->getHopCount() - 1;
-  //   } else {
-  //     vcSet = 2*localDimWidths_.size() - 1 + packet->getGlobalHopCount();
-  //   }
-  //   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
-  //     u32 outputPort = *it;
-  //     if (outputPort >= concentration_) {
-  //       for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
-  //            + 2 * globalDimWidths_.size()) {
-  //         _response->add(outputPort, vc);
-  //       }
-  //     }
-  //   }
-  // }
+  if (switchedToValiant == true) {
+    outputPorts = ValiantRoutingAlgorithm::routing(
+                  _flit, destinationAddress);
+    assert(outputPorts.size() >= 1);
+    // reset localDst once in a new group
+    if (*outputPorts.begin() >= getPortBase()) {
+        packet->incrementGlobalHopCount();
+      // delete local router
+      packet->setLocalDst(nullptr);
+      packet->setLocalDstPort(nullptr);
+    }
+    if (packet->getGlobalHopCount() == 0) {
+      vcSet = packet->getHopCount() - 1;
+    } else {
+      vcSet = 2*localDimWidths_.size() - 1 + packet->getGlobalHopCount();
+    }
+    for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
+      u32 outputPort = *it;
+      if (outputPort >= concentration_) {
+        for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
+             + 2 * globalDimWidths_.size()) {
+          _response->add(outputPort, vc);
+        }
+      }
+    }
+  }
   assert(_response->size() > 0);
 }
 

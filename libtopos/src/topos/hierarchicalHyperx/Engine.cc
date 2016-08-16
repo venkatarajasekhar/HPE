@@ -274,18 +274,20 @@ void Engine::stage4() {
                          * hHyperx_.localWeights.at(localD);
     }
     if (totalLocalLinks == hHyperx_.localLinks) {
-      if (hHyperx_.localDim > 1) {
-        // u64 firstDimLinks = (hHyperx_.localWidths.at(0) - 1) *
-        //                     hHyperx_.localWeights.at(0);
-        // u64 secondDimLinks = (hHyperx_.localWidths.at(1) - 1) *
-        //                      hHyperx_.localWeights.at(1);
-        // if (firstDimLinks <= 2 * secondDimLinks
-        //     && secondDimLinks <= firstDimLinks) {
+      if (hHyperx_.localDim > 1 && hHyperx_.globalDim == 1) {
         // fatter link horizontally as for DOR
         if (hHyperx_.localWeights.at(0) == hHyperx_.localWidths.at(1)
                                          * hHyperx_.localWeights.at(1)) {
-             stage5();
+          stage5();
          }
+      } else if (hHyperx_.globalDim == 2  && hHyperx_.localDim == 2) {
+        u64 firstDimLinks = (hHyperx_.localWidths.at(0) - 1) *
+                             hHyperx_.localWeights.at(0);
+        u64 secondDimLinks = (hHyperx_.localWidths.at(1) - 1) *
+                             hHyperx_.localWeights.at(1);
+        if (firstDimLinks == secondDimLinks) {
+          stage5();
+        }
       } else {
         stage5();
       }
@@ -334,24 +336,24 @@ void Engine::stage5() {
     }
     if (totalGlobalLinks == hHyperx_.globalLinks * hHyperx_.routersPerGroup) {
       if (hHyperx_.globalDim > 1 && hHyperx_.localDim == 1) {
-        // u64 firstDimLinks = (hHyperx_.globalWidths.at(0) - 1) *
-        //                    hHyperx_.globalWeights.at(0);
-        // u64 secondDimLinks = (hHyperx_.globalWidths.at(1) - 1) *
-        //                     hHyperx_.globalWeights.at(1);
-        // if (firstDimLinks <= 2 * secondDimLinks
-        //    && secondDimLinks <= 2 * firstDimLinks) {
         // compensate for stronger demands horizontally
         if (hHyperx_.globalWeights.at(0) == hHyperx_.globalWidths.at(1)
                                          * hHyperx_.globalWeights.at(1)) {
           stage6();
         }
       } else if (hHyperx_.globalDim == 2  && hHyperx_.localDim == 2) {
-        if (  // ((hHyperx_.globalWidths.at(0) - 1)
+        u64 firstDimLinks = (hHyperx_.globalWidths.at(0) - 1) *
+                            hHyperx_.globalWeights.at(0);
+        u64 secondDimLinks = (hHyperx_.globalWidths.at(1) - 1) *
+                             hHyperx_.globalWeights.at(1);
+        // optimize for random dim routing
+        if (firstDimLinks == secondDimLinks) {
+            // if (  // ((hHyperx_.globalWidths.at(0) - 1)
             // * hHyperx_.globalWeights.at(0))
             // % hHyperx_.routersPerGroup == 0 &&
             // fatter global link horizontally
-             hHyperx_.globalWeights.at(0) == hHyperx_.globalWidths.at(1)
-             * hHyperx_.globalWeights.at(1)) {
+            //  hHyperx_.globalWeights.at(0) == hHyperx_.globalWidths.at(1)
+            // * hHyperx_.globalWeights.at(1)) {
           stage6();
         }
       } else {
