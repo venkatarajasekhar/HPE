@@ -62,11 +62,9 @@ void GlobalDimOrderRoutingAlgorithm::processRequest(
   }
   // figure out which VC set to use
   u32 vcSet = _flit->getPacket()->getHopCount() - 1;
-  dbgprintf("current vcset %u \n", vcSet);
 
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
-    dbgprintf("output port is %u \n", *it);
     u32 outputPort = *it;
     if (outputPort < concentration_) {
       for (u32 vc = 0; vc < numVcs_; vc++) {
@@ -87,14 +85,9 @@ std::unordered_set<u32> GlobalDimOrderRoutingAlgorithm::routing(Flit* _flit,
   const std::vector<u32>* destinationAddress) {
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
-  dbgprintf("\nDim: Router address is %s \n",
-           strop::vecString<u32>(routerAddress).c_str());
-  dbgprintf("Dim: Destination address is %s \n",
-           strop::vecString<u32>(*destinationAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
 
   Packet* packet = _flit->getPacket();
-
   u32 globalDimensions = globalDimWidths_.size();
   u32 localDimensions = localDimWidths_.size();
   u32 numRoutersPerGlobalRouter = 1;
@@ -175,10 +168,6 @@ std::unordered_set<u32> GlobalDimOrderRoutingAlgorithm::routing(Flit* _flit,
       reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
     const std::vector<u32>* localDstPort =
       reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
-    dbgprintf("Connected local dst is %s \n",
-               strop::vecString<u32>(*localDst).c_str());
-    dbgprintf("local dst port is %s \n",
-               strop::vecString<u32>(*localDstPort).c_str());
 
     u32 portBase = getPortBase();
     // if router has a global link to destination global router
@@ -289,8 +278,6 @@ void GlobalDimOrderRoutingAlgorithm::globalPortToLocalAddress(u32 globalPort,
   assert(localAddress->size() == localDimensions);
   *localPortWithoutBase = globalPort / numRoutersPerGlobalRouter;
   assert(*localPortWithoutBase < globalLinksPerRouter_);
-  dbgprintf("Computed local router address is %s \n",
-            strop::vecString<u32>(*localAddress).c_str());
 }
 
 }  // namespace HierarchicalHyperX

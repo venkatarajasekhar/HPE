@@ -152,20 +152,15 @@ void Engine::stage1() {
 }
 
 void Engine::stage2() {
-  // printf("localDim = %lu, globalDim = %lu, concentration = %lu\n",
-  //       hHyperx_.localDim, hHyperx_.globalDim, hHyperx_.concentration);
   u64 maxLocalWidth = hHyperx_.localLinks - hHyperx_.localDim + 2;
   // loop through local widths
   while (true) {
-    // printf("In local width loop \n");
     // sanity check of local link number
     u64 totalLocalLinks = 0;
     for (u64 localD = 0; localD < hHyperx_.localDim; localD++) {
       totalLocalLinks += hHyperx_.localWidths.at(localD) - 1;
     }
     if (totalLocalLinks <= hHyperx_.localLinks) {
-      // printf("local width = %s\n",
-      //     strop::vecString<u64>(hHyperx_.localWidths).c_str());
       // generate possible global widths
       hHyperx_.globalWidths.clear();
       hHyperx_.globalWidths.resize(hHyperx_.globalDim, 2);
@@ -214,7 +209,6 @@ void Engine::stage3() {
 
   // loop through global widths
   while (true) {
-    // printf("In global width loop \n");
     // sanity check of global link number
     u64 totalGlobalLinks = 0;
     for (u64 globalD = 0; globalD < hHyperx_.globalDim; globalD++) {

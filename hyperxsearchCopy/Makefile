@@ -8,11 +8,13 @@ MAIN_FILE     := src/search.cc
 #--------------------- External Libraries -------------------------------------#
 HEADER_DIRS   := \
 	../libprim/inc \
+	../libtopos/inc \
 	../libstrop/inc \
 	../libgrid/inc
 
 STATIC_LIBS   := \
 	../libprim/bld/libprim.a \
+	../libtopos/bld/libtopos.a \
 	../libstrop/bld/libstrop.a \
 	../libgrid/bld/libgrid.a
 

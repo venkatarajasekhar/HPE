@@ -68,16 +68,6 @@ Network::Network(const std::string& _name, const Component* _parent,
   }
   concentration_ = _settings["concentration"].asUInt();
   assert(concentration_ > 0);
-  dbgprintf("hierarchy_ = %u", hierarchy_);
-  dbgprintf("globalDimensionWidths_ = %s",
-            strop::vecString<u32>(globalDimensionWidths_).c_str());
-  dbgprintf("globalDimensionWeights_ = %s",
-            strop::vecString<u32>(globalDimensionWeights_).c_str());
-  dbgprintf("localDimensionWidths_ = %s",
-            strop::vecString<u32>(localDimensionWidths_).c_str());
-  dbgprintf("localDimensionWeights_ = %s",
-            strop::vecString<u32>(localDimensionWeights_).c_str());
-  dbgprintf("concentration_ = %u", concentration_);
 
   // router radix
   assert(_settings["router"].isMember("num_ports") == false);
@@ -123,8 +113,6 @@ Network::Network(const std::string& _name, const Component* _parent,
     routers_.at(routerAddress) = RouterFactory::createRouter(
       routerName, this, routerAddress, routingAlgorithmFactory,
       _settings["router"]);
-    dbgprintf("routerAddress = %s",
-            strop::vecString<u32>(routerAddress).c_str());
     // set the router's address
     // routers_.at(routerAddress)->setAddress(routerAddress);
   }
@@ -163,11 +151,6 @@ Network::Network(const std::string& _name, const Component* _parent,
           u32 sourcePort = portBase + ((offset - 1) * localDimWeight) + weight;
           u32 destinationPort = portBase + ((localDimWidth - 1 - offset) *
                                             localDimWeight) + weight;
-          dbgprintf("linking %s:%u to %s:%u with %s",
-                    strop::vecString<u32>(sourceAddress).c_str(), sourcePort,
-                    strop::vecString<u32>(destinationAddress).c_str(),
-                    destinationPort,
-                    channelName.c_str());
 
           // link the routers from source to destination
           routers_.at(sourceAddress)->setOutputChannel(sourcePort, channel);
@@ -192,8 +175,6 @@ Network::Network(const std::string& _name, const Component* _parent,
     for (u32 globalDim = 0; globalDim < globalDimensions_; globalDim++) {
       u32 globalDimWidth = globalDimensionWidths_.at(globalDim);
       u32 globalDimWeight = globalDimensionWeights_.at(globalDim);
-      dbgprintf("global dim=%u width=%u weight=%u\n",
-                globalDim, globalDimWidth, globalDimWeight);
 
       for (u32 offset = 1; offset < globalDimWidth; offset++) {
         // global source router
@@ -230,9 +211,6 @@ Network::Network(const std::string& _name, const Component* _parent,
           assert(srcLocalAddress.size() == localDimensions_);
           u32 srcPort = virtualGlobalSrcPort / numRoutersPerGlobalRouter;
           assert(srcPort < globalLinksPerRouter_);
-          dbgprintf("global port = %u, local router address = %s \n",
-                   virtualGlobalSrcPort,
-                   strop::vecString<u32>(srcLocalAddress).c_str());
 
           std::vector<u32> dstLocalAddress(localDimensions_);
           product = 1;
@@ -273,11 +251,6 @@ Network::Network(const std::string& _name, const Component* _parent,
 
           srcPort += routerRadix - globalLinksPerRouter_;
           dstPort += routerRadix - globalLinksPerRouter_;
-
-          dbgprintf("linking %s:%u to %s:%u with %s \n",
-                    strop::vecString<u32>(srcAddress).c_str(), srcPort,
-                    strop::vecString<u32>(dstAddress).c_str(), dstPort,
-                    channelName.c_str());
 
           // link routers from source to destination
           routers_.at(srcAddress)->setOutputChannel(srcPort, channel);
@@ -348,7 +321,6 @@ Network::Network(const std::string& _name, const Component* _parent,
     }
   }
   delete injectionAlgorithmFactory;
-  dbgprintf("%s \n", "end point");
 }
 
 Network::~Network() {

@@ -39,6 +39,3 @@ inc/
 *.mpf.gz
 *.csv
 *.csv.gz
-
-# python junk
-__pycache__/
