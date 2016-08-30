@@ -48,15 +48,6 @@ class ProgressiveAdaptiveRoutingAlgorithm : public ValiantRoutingAlgorithm {
   std::unordered_set<u32> routing(
       Flit* _flit, const std::vector<u32>* destinationAddress);
 
-  u32 getPortBase();
-
-  void globalPortToLocalAddress(u32 globalPort,
-      std::vector<u32>* localAddress, u32* localPortWithoutBase);
-
-  void setLocalDst(u32 globalDim, u32 globalPortBase,
-       const std::vector<u32>* destinationAddress,
-       std::vector<u32>* globalOutputPorts, Flit* _flit);
-
   f64 threshold_;
 };
 

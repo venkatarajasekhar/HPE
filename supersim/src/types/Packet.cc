@@ -22,10 +22,7 @@
 
 Packet::Packet(u32 _id, u32 _numFlits, Message* _message)
   : id_(_id), message_(_message), hopCount_(0),
-    metadata_(U64_MAX), routingExtension_(nullptr),
-    localDst_(nullptr), localDstPorts_(nullptr),
-    globalHopCount_(0), intermediateDone_(false),
-    localDetour_(0), valiantMode_(false) {
+    metadata_(U64_MAX), routingExtension_(nullptr) {
   flits_.resize(_numFlits);
 }
 
@@ -36,8 +33,6 @@ Packet::~Packet() {
     }
   }
   assert(routingExtension_ == nullptr);
-  assert(localDst_ == nullptr);
-  assert(localDstPorts_ == nullptr);
 }
 
 u32 Packet::getId() const {
@@ -103,50 +98,3 @@ void Packet::setRoutingExtension(void* _ext) {
   routingExtension_ = _ext;
 }
 
-void* Packet::getLocalDst() const {
-  return localDst_;
-}
-
-void Packet::setLocalDst(void* _localDst) {
-  localDst_ = _localDst;
-}
-
-void* Packet::getLocalDstPort() const {
-  return localDstPorts_;
-}
-
-void Packet::setLocalDstPort(void* _localDstPort) {
-  localDstPorts_ = _localDstPort;
-}
-
-void Packet::incrementGlobalHopCount() {
-  globalHopCount_++;
-}
-
-u32 Packet::getGlobalHopCount() const {
-  return globalHopCount_;
-}
-
-void Packet::setIntermediate(bool _intermediateDone) {
-  intermediateDone_ = _intermediateDone;
-}
-
-bool Packet::getIntermediateDone() {
-  return intermediateDone_;
-}
-
-u32 Packet::getDetour() const {
-  return localDetour_;
-}
-
-void Packet::setDetour(u32 _localDetour) {
-  localDetour_ = _localDetour;
-}
-
-bool Packet::getValiantMode() const {
-  return valiantMode_;
-}
-
-void Packet::setValiantMode(bool _valiantMode) {
-  valiantMode_ = _valiantMode;
-}

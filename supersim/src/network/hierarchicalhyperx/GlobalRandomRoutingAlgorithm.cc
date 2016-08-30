@@ -21,6 +21,8 @@
 #include <set>
 #include "types/Message.h"
 #include "types/Packet.h"
+#include "network/hierarchicalhyperx/util.h"
+
 
 namespace HierarchicalHyperX {
 
@@ -49,28 +51,31 @@ void GlobalRandomRoutingAlgorithm::processRequest(
   // ex: [c,1,...,m,1,...,n]
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
-
+  Packet* packet = _flit->getPacket();
   // perform routing
   std::unordered_set<u32> outputPorts = routing(_flit, destinationAddress);
   assert(outputPorts.size() >= 1);
-  if (*outputPorts.begin() >= getPortBase()) {
-    _flit->getPacket()->incrementGlobalHopCount();
+  if (*outputPorts.begin() >= getPortBase(concentration_, localDimWidths_,
+                                          localDimWeights_)) {
+    RoutingInfo* ri = reinterpret_cast<RoutingInfo*>(
+                      packet->getRoutingExtension());
+    ri->globalHopCount++;
     // delete local router
-    _flit->getPacket()->setLocalDst(nullptr);
-    _flit->getPacket()->setLocalDstPort(nullptr);
+    ri->localDst = nullptr;
+    ri->localDstPort = nullptr;
+    packet->setRoutingExtension(ri);
   }
   // figure out which VC set to use
-  u32 vcSet = _flit->getPacket()->getHopCount() - 1;
-  dbgprintf("current vcset %u \n", vcSet);
+  u32 vcSet = packet->getHopCount() - 1;
 
   // format the response
   for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
-    dbgprintf("output port is %u \n", *it);
     u32 outputPort = *it;
     if (outputPort < concentration_) {
       for (u32 vc = 0; vc < numVcs_; vc++) {
         _response->add(outputPort, vc);
       }
+      packet->setRoutingExtension(nullptr);
     } else {
     // select VCs in the corresponding set
       for (u32 vc = vcSet; vc < numVcs_; vc += (globalDimWidths_.size() + 1)
@@ -86,10 +91,6 @@ std::unordered_set<u32> GlobalRandomRoutingAlgorithm::routing(Flit* _flit,
   const std::vector<u32>* destinationAddress) {
   // ex: [1,...,m,1,...,n]
   const std::vector<u32>& routerAddress = router_->getAddress();
-  dbgprintf("\nDim: Router address is %s \n",
-           strop::vecString<u32>(routerAddress).c_str());
-  dbgprintf("Dim: Destination address is %s \n",
-           strop::vecString<u32>(*destinationAddress).c_str());
   assert(routerAddress.size() == destinationAddress->size() - 1);
 
   Packet* packet = _flit->getPacket();
@@ -117,75 +118,35 @@ std::unordered_set<u32> GlobalRandomRoutingAlgorithm::routing(Flit* _flit,
   std::vector<u32> globalOutputPorts;
   std::unordered_set<u32> outputPorts;
 
+  if (packet->getRoutingExtension() == nullptr) {
+    RoutingInfo* ri = new RoutingInfo();
+    ri->intermediateAddress = nullptr;
+    ri->localDst = nullptr;
+    ri->localDstPort = nullptr;
+    ri->localDerouteCount = 0;
+    ri->globalHopCount = 0;
+    ri->intermediateDone = false;
+    ri->valiantMode = false;
+    packet->setRoutingExtension(ri);
+  }
+  RoutingInfo* ri = reinterpret_cast<RoutingInfo*>(
+                    packet->getRoutingExtension());
+
   // if at different global router
   if (atGlobalDst == false) {
-    if (packet->getLocalDst() == nullptr) {
-      // pick a random global dimension
-      u32 globalDim = diffGlobalDims.at(gSim->rnd.nextU64(0,
-                                        diffGlobalDims.size() - 1));
-      u32 globalPortBase = 0;
-      for (u32 tmp = 0; tmp < globalDim; tmp++) {
-        globalPortBase += ((globalDimWidths_.at(tmp) - 1)
-                           * globalDimWeights_.at(tmp));
-      }
-      // find the right port of the virtual global router
-      u32 src = routerAddress.at(localDimensions + globalDim);
-      u32 dst = destinationAddress->at(localDimensions + globalDim + 1);
-      if (dst < src) {
-        dst += globalDimWidths_.at(globalDim);
-      }
-      u32 offset = (dst - src - 1) * globalDimWeights_.at(globalDim);
-
-      // add all ports where the two global routers are connecting
-      for (u32 weight = 0; weight < globalDimWeights_.at(globalDim);
-           weight++) {
-        u32 globalPort = globalPortBase + offset + weight;
-        globalOutputPorts.push_back(globalPort);
-      }
-      assert(globalOutputPorts.size() > 0);
-
-      bool hasGlobalLinkToDst = false;
-      std::vector<u32>* dstPort = new std::vector<u32>;
-
-      // set local dst to self if has global link
-      for (auto itr = globalOutputPorts.begin();
-           itr != globalOutputPorts.end(); itr++) {
-        std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
-        u32 connectedPort;
-        globalPortToLocalAddress(*itr, localRouter, &connectedPort);
-        if (std::equal(localRouter->begin(), localRouter->end(),
-                       routerAddress.begin())) {
-          hasGlobalLinkToDst = true;
-          packet->setLocalDst(localRouter);
-          dstPort->push_back(connectedPort);
-          packet->setLocalDstPort(dstPort);
-        }
-      }
-
-      // if no global link, pick a random one
-      if (hasGlobalLinkToDst == false) {
-        // pick a random global port
-        u32 globalPort = globalOutputPorts.at(gSim->rnd.nextU64(
-                         0, globalOutputPorts.size() - 1));
-
-        // translate global router port number to local router
-        std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
-        u32 connectedPort;
-        globalPortToLocalAddress(globalPort, localRouter, &connectedPort);
-        dstPort->push_back(connectedPort);
-        packet->setLocalDst(localRouter);
-        packet->setLocalDstPort(dstPort);
-      }
+    if (ri->localDst == nullptr) {
+      setLocalDst(&diffGlobalDims, destinationAddress, &globalOutputPorts,
+                  _flit, routerAddress, localDimWidths_, globalDimWidths_,
+                  globalDimWeights_);
     }
 
     const std::vector<u32>* localDst =
-      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
+      reinterpret_cast<const std::vector<u32>*>(ri->localDst);
     const std::vector<u32>* localDstPort =
-      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
-    dbgprintf("Connected local dst is %s \n",
-               strop::vecString<u32>(*localDst).c_str());
+      reinterpret_cast<const std::vector<u32>*>(ri->localDstPort);
 
-    u32 portBase = getPortBase();
+    u32 portBase = getPortBase(concentration_, localDimWidths_,
+                               localDimWeights_);
     // if router has a global link to destination global router
     if (std::equal(localDst->begin(), localDst->end(),
           routerAddress.begin())) {
@@ -225,8 +186,9 @@ std::unordered_set<u32> GlobalRandomRoutingAlgorithm::routing(Flit* _flit,
   } else {
     // if at the same global virtual router
     // use the regular dimension order routing of HyperX
-    packet->setLocalDst(nullptr);
-    packet->setLocalDstPort(nullptr);
+    ri->localDst = nullptr;
+    ri->localDstPort = nullptr;
+    packet->setRoutingExtension(ri);
     // determine the next local dimension to work on
     u32 localDim;
     u32 portBase = concentration_;
@@ -260,42 +222,6 @@ std::unordered_set<u32> GlobalRandomRoutingAlgorithm::routing(Flit* _flit,
     }
   }
   return outputPorts;
-}
-
-u32 GlobalRandomRoutingAlgorithm::getPortBase() {
-  u32 localDimensions = localDimWidths_.size();
-  u32 portBase = concentration_;
-  for (u32 i = 0; i < localDimensions; i++) {
-    portBase += ((localDimWidths_.at(i) - 1) * localDimWeights_.at(i));
-  }
-  return portBase;
-}
-
-void GlobalRandomRoutingAlgorithm::globalPortToLocalAddress(u32 globalPort,
-  std::vector<u32>* localAddress, u32* localPortWithoutBase) {
-  u32 localDimensions = localDimWidths_.size();
-  u32 numRoutersPerGlobalRouter = 1;
-  for (u32 tmp = 0; tmp < localDimensions; tmp++) {
-    numRoutersPerGlobalRouter *= localDimWidths_.at(tmp);
-  }
-  u32 product = 1;
-  for (u32 tmp = 0; tmp < localDimensions - 1; tmp++) {
-    product *= localDimWidths_.at(tmp);
-  }
-  u32 globalPortCopy = globalPort;
-  for (s32 localDim = localDimensions - 1; localDim >= 0; localDim--) {
-    localAddress->at(localDim) = (globalPortCopy / product)
-                                  % localDimWidths_.at(localDim);
-    globalPortCopy %= product;
-    if (localDim != 0) {
-      product /= localDimWidths_.at(localDim - 1);
-    }
-  }
-  assert(localAddress->size() == localDimensions);
-  *localPortWithoutBase = globalPort / numRoutersPerGlobalRouter;
-  assert(*localPortWithoutBase < globalLinksPerRouter_);
-  dbgprintf("Computed local router address is %s \n",
-            strop::vecString<u32>(*localAddress).c_str());
 }
 
 }  // namespace HierarchicalHyperX

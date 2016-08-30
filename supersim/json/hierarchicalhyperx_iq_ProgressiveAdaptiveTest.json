@@ -7,19 +7,19 @@
   },
   "network": {
     "topology": "hierarchical_hyperx",
-    "num_vcs": 20,
+    "num_vcs": 10,
     "hierarchy": 2,
-    "global_dimension_widths": [4, 4],
-    "global_dimension_weights": [5, 5],
-    "local_dimension_widths": [4, 4],
+    "global_dimension_widths": [10],
+    "global_dimension_weights": [1],
+    "local_dimension_widths": [3, 3],
     "local_dimension_weights": [1, 1],
-    "global_links_per_router": 2,
+    "global_links_per_router": 1,
     "concentration": 1,
     "internal_local_channel": {
-      "latency": 1 // cycles
+      "latency": 5 // cycles
     },
     "internal_global_channel": {
-      "latency": 5 // cycles
+      "latency": 100 // cycles
     },
     "external_channel": {
       "latency": 5 // cycles
@@ -30,8 +30,7 @@
     "routing": {
       "algorithm": "progressive_adaptive",
       "latency": 1,
-      "congestion_threshold": 0.9,
-      "random_group": true
+      "congestion_threshold": 0.9
     },
     "interface": {
       "type": "standard",
@@ -105,8 +104,10 @@
       "warmup_window": 15,
       "warmup_attempts": 30,
       "traffic_pattern": {
-        "type": "bit_complement",
-        "send_to_self": false
+        "type": "dragonfly_wc",
+        "concentration": 1,
+        "group_num": 10,
+        "group_size": 9
       }
     },
     "message_log": {

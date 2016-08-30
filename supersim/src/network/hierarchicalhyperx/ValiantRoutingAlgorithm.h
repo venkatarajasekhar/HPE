@@ -12,12 +12,12 @@
 
 #include "event/Component.h"
 #include "network/RoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/GlobalDimOrderRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/DimOrderRoutingAlgorithm.h"
 #include "router/Router.h"
 
 namespace HierarchicalHyperX {
 
-class ValiantRoutingAlgorithm : public GlobalDimOrderRoutingAlgorithm {
+class ValiantRoutingAlgorithm : public DimOrderRoutingAlgorithm {
  public:
   ValiantRoutingAlgorithm(const std::string& _name, const Component* _parent,
                           u64 _latency, Router* _router, u32 _numVcs,

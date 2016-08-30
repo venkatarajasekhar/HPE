@@ -17,13 +17,13 @@
 
 #include <cassert>
 
-#include "network/hierarchicalhyperx/GlobalDimOrderRoutingAlgorithm.h"
+#include "network/hierarchicalhyperx/DimOrderRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ValiantRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/MinimalAdaptiveRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalAndLocalRandomRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/GlobalRandomRoutingAlgorithm.h"
 #include "network/hierarchicalhyperx/ProgressiveAdaptiveRoutingAlgorithm.h"
-#include "network/hierarchicalhyperx/PAR.h"
+#include "network/hierarchicalhyperx/ProgressiveAdaptiveGRoutingAlgorithm.h"
 #include "network/RoutingAlgorithm.h"
 
 namespace HierarchicalHyperX {
@@ -55,7 +55,7 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
   u32 localDetour = settings_["local_detour"].asUInt();
 
   if (algorithm == "dimension_order") {
-    return new HierarchicalHyperX::GlobalDimOrderRoutingAlgorithm(
+    return new HierarchicalHyperX::DimOrderRoutingAlgorithm(
         _name, _parent, _latency, _router, numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_);
@@ -86,8 +86,8 @@ RoutingAlgorithm* RoutingAlgorithmFactory::createRoutingAlgorithm(
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_,
         congestionThreshold, _randomGroup);
-  } else if (algorithm == "PAR") {
-    return new HierarchicalHyperX::PAR(
+  } else if (algorithm == "progressive_adaptive_g") {
+    return new HierarchicalHyperX::ProgressiveAdaptiveGRoutingAlgorithm(
         _name, _parent, _latency, _router,  numVcs_, globalDimensionWidths_,
         globalDimensionWeights_, localDimensionWidths_, localDimensionWeights_,
         concentration_, globalLinksPerRouter_,

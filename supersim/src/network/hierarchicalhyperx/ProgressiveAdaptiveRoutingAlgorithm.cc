@@ -22,6 +22,7 @@
 #include <set>
 #include "types/Message.h"
 #include "types/Packet.h"
+#include "network/hierarchicalhyperx/util.h"
 
 namespace HierarchicalHyperX {
 
@@ -50,44 +51,51 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
   const std::vector<u32>* destinationAddress =
       _flit->getPacket()->getMessage()->getDestinationAddress();
   Packet* packet = _flit->getPacket();
-  dbgprintf("Destination address is %s \n",
-         strop::vecString<u32>(*destinationAddress).c_str());
 
-  if (packet->getHopCount() == 1) {
-    packet->setValiantMode(false);
-    assert(packet->getGlobalHopCount() == 0);
+  if (packet->getRoutingExtension() == nullptr) {
+    RoutingInfo* ri = new RoutingInfo();
+    ri->intermediateAddress = nullptr;
+    ri->localDst = nullptr;
+    ri->localDstPort = nullptr;
+    ri->localDerouteCount = 0;
+    ri->globalHopCount = 0;
+    ri->intermediateDone = false;
+    ri->valiantMode = false;
+    packet->setRoutingExtension(ri);
   }
+  RoutingInfo* ri = reinterpret_cast<RoutingInfo*>(
+                    packet->getRoutingExtension());
 
   std::unordered_set<u32> outputPorts;
   // routing depends on mode
-  if (packet->getValiantMode() == false) {
+  if (ri->valiantMode == false) {
     outputPorts = ProgressiveAdaptiveRoutingAlgorithm::routing(_flit,
                                           destinationAddress);
     assert(outputPorts.size() >= 1);
   } else {
     // use Valiant routing
-    dbgprintf("Valiant mode \n");
     outputPorts = ValiantRoutingAlgorithm::routing(
                   _flit, destinationAddress);
     assert(outputPorts.size() >= 1);
   }
 
   // reset localDst once in a new group
-  if (*outputPorts.begin() >= getPortBase()) {
-    packet->incrementGlobalHopCount();
+  if (*outputPorts.begin() >= getPortBase(concentration_, localDimWidths_,
+                                          localDimWeights_)) {
+    ri->globalHopCount++;
     // delete local router
-    packet->setLocalDst(nullptr);
-    packet->setLocalDstPort(nullptr);
+    ri->localDst = nullptr;
+    ri->localDstPort = nullptr;
+    packet->setRoutingExtension(ri);
   }
 
   // figure out which VC set to use
   u32 vcSet;
-  if (packet->getGlobalHopCount() == 0) {
+  if (ri->globalHopCount == 0) {
     vcSet = packet->getHopCount() - 1;
   } else {
-    vcSet = 2*localDimWidths_.size() - 1 + packet->getGlobalHopCount();
+    vcSet = 2*localDimWidths_.size() - 1 + ri->globalHopCount;
   }
-  dbgprintf("vcset = %u\n", vcSet);
 
   // format the response
   bool switchedToValiant = false;
@@ -99,13 +107,11 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
       }
       assert(_response->size() > 0);
       // delete the routing extension
+      delete ri;
       packet->setRoutingExtension(nullptr);
-      packet->setLocalDst(nullptr);
-      packet->setLocalDstPort(nullptr);
     } else {
       // check for congestion
-      if (packet->getValiantMode() == false
-          && packet->getGlobalHopCount() == 0) {
+      if (ri->valiantMode == false && ri->globalHopCount == 0) {
         f64 availability = 0.0;
         u32 vcCount = 0;
         for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
@@ -117,9 +123,10 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
         availability = availability / vcCount;
         if (availability <= threshold_) {
           // reset localdst for valiant
-          packet->setLocalDst(nullptr);
-          packet->setLocalDstPort(nullptr);
-          packet->setValiantMode(true);
+          ri->localDst = nullptr;
+          ri->localDstPort = nullptr;
+          ri->valiantMode = true;
+          packet->setRoutingExtension(ri);
           switchedToValiant = true;
         }
       }
@@ -141,16 +148,18 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
                   _flit, destinationAddress);
     assert(outputPorts.size() >= 1);
     // reset localDst once in a new group
-    if (*outputPorts.begin() >= getPortBase()) {
-        packet->incrementGlobalHopCount();
+    if (*outputPorts.begin() >= getPortBase(concentration_, localDimWidths_,
+                                            localDimWeights_)) {
+      ri->globalHopCount++;
       // delete local router
-      packet->setLocalDst(nullptr);
-      packet->setLocalDstPort(nullptr);
+      ri->localDst = nullptr;
+      ri->localDstPort = nullptr;
+      packet->setRoutingExtension(ri);
     }
-    if (packet->getGlobalHopCount() == 0) {
+    if (ri->globalHopCount == 0) {
       vcSet = packet->getHopCount() - 1;
     } else {
-      vcSet = 2*localDimWidths_.size() - 1 + packet->getGlobalHopCount();
+      vcSet = 2*localDimWidths_.size() - 1 + ri->globalHopCount;
     }
     for (auto it = outputPorts.cbegin(); it != outputPorts.cend(); ++it) {
       u32 outputPort = *it;
@@ -192,25 +201,30 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
   std::vector<u32> globalOutputPorts;
   std::unordered_set<u32> outputPorts;
 
+  RoutingInfo* ri = reinterpret_cast<RoutingInfo*>(
+                    packet->getRoutingExtension());
+
   // within first non-dst group
-  if (packet->getGlobalHopCount() == 0 && globalDim != globalDimensions) {
+  if (ri->globalHopCount == 0 && globalDim != globalDimensions) {
     // choose a random local dst
-    if (packet->getLocalDst() == nullptr) {
-      setLocalDst(globalDim, globalPortBase,
-                  destinationAddress, &globalOutputPorts, _flit);
+    if (ri->localDst == nullptr) {
+      std::vector<u32>* diffGlobalDims = new std::vector<u32>;
+      diffGlobalDims->push_back(globalDim);
+      setLocalDst(diffGlobalDims, destinationAddress, &globalOutputPorts,
+                  _flit, routerAddress, localDimWidths_, globalDimWidths_,
+                  globalDimWeights_);
     }
     const std::vector<u32>* localDst =
-      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDst());
+      reinterpret_cast<const std::vector<u32>*>(ri->localDst);
     const std::vector<u32>* localDstPort =
-      reinterpret_cast<const std::vector<u32>*>(packet->getLocalDstPort());
+      reinterpret_cast<const std::vector<u32>*>(ri->localDstPort);
 
     // if router has a global link to destination global router
     if (std::equal(localDst->begin(), localDst->end(),
           routerAddress.begin())) {
-      u32 portBase = getPortBase();
+      u32 portBase = getPortBase(concentration_, localDimWidths_,
+                                 localDimWeights_);
       // find if congested
-      assert(outputPorts.size() == 0);
-      // all appropriate ports
       for (auto itr = localDstPort->begin();
            itr != localDstPort->end(); itr++) {
         f64 availability = 0.0;
@@ -222,7 +236,6 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
           vcCount++;
         }
         availability = availability / vcCount;
-        dbgprintf("avaialability = %f\n", availability);
         // port not congested
         if (availability > threshold_) {
           bool res = outputPorts.insert(portBase + *itr).second;
@@ -232,15 +245,13 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
       }
       // congested, go Valiant
       if (outputPorts.size() == 0) {
-        packet->setValiantMode(true);
-        dbgprintf("switched to Valiant mode, hop = %u \n",
-                 packet->getHopCount());
+        ri->valiantMode = true;
         // reset localdst for Valiant
-        packet->setLocalDst(nullptr);
-        packet->setLocalDstPort(nullptr);
+        ri->localDst = nullptr;
+        ri->localDstPort = nullptr;
+        packet->setRoutingExtension(ri);
         outputPorts = ValiantRoutingAlgorithm::routing(
                              _flit, destinationAddress);
-        assert(outputPorts.size() >= 1);
       }
       assert(outputPorts.size() >= 1);
     } else {
@@ -272,105 +283,11 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
     }
   } else {
     // not in first group, just use dimension order
-    return GlobalDimOrderRoutingAlgorithm::routing(
+    return DimOrderRoutingAlgorithm::routing(
            _flit, destinationAddress);
   }
   assert(outputPorts.size() >= 1);
   return outputPorts;
-}
-
-u32 ProgressiveAdaptiveRoutingAlgorithm::getPortBase() {
-  u32 localDimensions = localDimWidths_.size();
-  u32 portBase = concentration_;
-  for (u32 i = 0; i < localDimensions; i++) {
-    portBase += ((localDimWidths_.at(i) - 1) * localDimWeights_.at(i));
-  }
-  return portBase;
-}
-
-void ProgressiveAdaptiveRoutingAlgorithm::globalPortToLocalAddress(
-          u32 globalPort, std::vector<u32>* localAddress,
-          u32* localPortWithoutBase) {
-  u32 localDimensions = localDimWidths_.size();
-  u32 numRoutersPerGlobalRouter = 1;
-  for (u32 tmp = 0; tmp < localDimensions; tmp++) {
-    numRoutersPerGlobalRouter *= localDimWidths_.at(tmp);
-  }
-  u32 product = 1;
-  for (u32 tmp = 0; tmp < localDimensions - 1; tmp++) {
-    product *= localDimWidths_.at(tmp);
-  }
-  u32 globalPortCopy = globalPort;
-  for (s32 localDim = localDimensions - 1; localDim >= 0; localDim--) {
-    localAddress->at(localDim) = (globalPortCopy / product)
-                                  % localDimWidths_.at(localDim);
-    globalPortCopy %= product;
-    if (localDim != 0) {
-      product /= localDimWidths_.at(localDim - 1);
-    }
-  }
-  assert(localAddress->size() == localDimensions);
-  *localPortWithoutBase = globalPort / numRoutersPerGlobalRouter;
-  assert(*localPortWithoutBase < globalLinksPerRouter_);
-  dbgprintf("Connected local router address is %s \n",
-            strop::vecString<u32>(*localAddress).c_str());
-}
-
-void ProgressiveAdaptiveRoutingAlgorithm::setLocalDst(
-        u32 globalDim, u32 globalPortBase,
-        const std::vector<u32>* destinationAddress,
-        std::vector<u32>* globalOutputPorts, Flit* _flit) {
-  const std::vector<u32>& routerAddress = router_->getAddress();
-  Packet* packet = _flit->getPacket();
-  u32 localDimensions = localDimWidths_.size();
-  // find the right port of the virtual global router
-  u32 src = routerAddress.at(localDimensions + globalDim);
-  u32 dst = destinationAddress->at(localDimensions + globalDim + 1);
-  if (dst < src) {
-    dst += globalDimWidths_.at(globalDim);
-  }
-  u32 offset = (dst - src - 1) * globalDimWeights_.at(globalDim);
-
-  // add all ports where the two global routers are connecting
-  for (u32 weight = 0; weight < globalDimWeights_.at(globalDim);
-       weight++) {
-    u32 globalPort = globalPortBase + offset + weight;
-    globalOutputPorts->push_back(globalPort);
-  }
-  assert(globalOutputPorts->size() > 0);
-
-  bool hasGlobalLinkToDst = false;
-  std::vector<u32>* dstPort = new std::vector<u32>;
-
-  // set local dst to self if has global link
-  for (auto itr = globalOutputPorts->begin();
-       itr != globalOutputPorts->end(); itr++) {
-    std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
-    u32 connectedPort;
-    globalPortToLocalAddress(*itr, localRouter, &connectedPort);
-    if (std::equal(localRouter->begin(), localRouter->end(),
-                   routerAddress.begin())) {
-      hasGlobalLinkToDst = true;
-      packet->setLocalDst(localRouter);
-      dstPort->push_back(connectedPort);
-      packet->setLocalDstPort(dstPort);
-    }
-  }
-
-  // if no global link, pick a random one
-  if (hasGlobalLinkToDst == false) {
-    // pick a random global port
-     u32 globalPort = globalOutputPorts->at(gSim->rnd.nextU64(
-                      0, globalOutputPorts->size() - 1));
-
-    // translate global router port number to local router
-    std::vector<u32>* localRouter = new std::vector<u32>(localDimensions);
-    u32 connectedPort;
-    globalPortToLocalAddress(globalPort, localRouter, &connectedPort);
-    dstPort->push_back(connectedPort);
-    packet->setLocalDst(localRouter);
-    packet->setLocalDstPort(dstPort);
-  }
 }
 
 }  // namespace HierarchicalHyperX

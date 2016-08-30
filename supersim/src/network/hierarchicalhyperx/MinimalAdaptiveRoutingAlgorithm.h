@@ -37,7 +37,7 @@ class MinimalAdaptiveRoutingAlgorithm : public RoutingAlgorithm {
                           const std::vector<u32>& _localDimensionWidths,
                           const std::vector<u32>& _localDimensionWeights,
                           u32 _concentration, u32 _globalLinksPerRouter,
-                          f64 _threshold_, u32 _localDetour);
+                          f64 _threshold_, u32 _localDeroute);
   ~MinimalAdaptiveRoutingAlgorithm();
 
  protected:
@@ -47,20 +47,11 @@ class MinimalAdaptiveRoutingAlgorithm : public RoutingAlgorithm {
   std::unordered_set<u32> routing(
       Flit* _flit, const std::vector<u32>* destinationAddress);
 
-  u32 getPortBase();
-
-  void globalPortToLocalAddress(u32 globalPort,
-      std::vector<u32>* localAddress, u32* localPortWithoutBase);
-
   u32 findHighestPort(std::unordered_map<u32, f64> portAvailability);
 
   void findPortAvailability(std::vector<u32> diffDims,
     std::unordered_map<u32, f64>* portAvailability,
     const std::vector<u32>* destinationAddress, Flit* _flit);
-
-  void setLocalDst(std::vector<u32>* diffGlobalDims,
-        const std::vector<u32>* destinationAddress,
-        std::vector<u32>* globalOutputPorts, Flit* _flit);
 
   void ifAtLocalDst(Flit* _flit, std::unordered_set<u32>* outputPorts,
      std::vector<u32>* globalOutputPorts, std::vector<u32>* diffGlobalDims);
@@ -75,7 +66,7 @@ class MinimalAdaptiveRoutingAlgorithm : public RoutingAlgorithm {
   u32 concentration_;
   u32 globalLinksPerRouter_;
   f64 threshold_;
-  u32 localDetour_;
+  u32 localDeroute_;
 };
 
 }  // namespace HierarchicalHyperX

@@ -51,23 +51,6 @@ class Packet {
   void* getRoutingExtension() const;
   void setRoutingExtension(void* _ext);
 
-  void* getLocalDst() const;
-  void setLocalDst(void* _localDst);
-  void* getLocalDstPort() const;
-  void setLocalDstPort(void* _localDstPort);
-
-  void incrementGlobalHopCount();
-  u32 getGlobalHopCount() const;
-
-  void setIntermediate(bool _intermediateDone);
-  bool getIntermediateDone();
-
-  u32 getDetour() const;
-  void setDetour(u32 _localDetour);
-
-  bool getValiantMode() const;
-  void setValiantMode(bool _valiantMode);
-
  private:
   u32 id_;
   std::vector<Flit*> flits_;
@@ -77,14 +60,6 @@ class Packet {
   u64 metadata_;
 
   void* routingExtension_;
-
-  void* localDst_;
-  void* localDstPorts_;
-
-  u32 globalHopCount_;
-  bool intermediateDone_;
-  u32 localDetour_;
-  bool valiantMode_;
 };
 
 #endif  // TYPES_PACKET_H_
