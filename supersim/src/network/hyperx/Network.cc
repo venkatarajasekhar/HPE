@@ -21,6 +21,7 @@
 #include <cmath>
 
 #include "interface/InterfaceFactory.h"
+#include "network/cube/util.h"
 #include "network/hyperx/InjectionAlgorithmFactory.h"
 #include "network/hyperx/RoutingAlgorithmFactory.h"
 #include "router/RouterFactory.h"
@@ -29,8 +30,8 @@
 namespace HyperX {
 
 Network::Network(const std::string& _name, const Component* _parent,
-                 Json::Value _settings)
-    : ::Network(_name, _parent, _settings) {
+                 MetadataHandler* _metadataHandler, Json::Value _settings)
+    : ::Network(_name, _parent, _metadataHandler, _settings) {
   // dimensions and concentration
   assert(_settings["dimension_widths"].isArray());
   dimensions_ = _settings["dimension_widths"].size();
@@ -83,7 +84,7 @@ Network::Network(const std::string& _name, const Component* _parent,
     // use the router factory to create a router
     routers_.at(routerAddress) = RouterFactory::createRouter(
         routerName, this, routerAddress, routingAlgorithmFactory,
-        _settings["router"]);
+        _metadataHandler, _settings["router"]);
   }
   delete routingAlgorithmFactory;
 
@@ -236,19 +237,24 @@ Interface* Network::getInterface(u32 _id) const {
   return interfaces_.at(_id);
 }
 
-void Network::translateIdToAddress(u32 _id, std::vector<u32>* _address) const {
-  _address->resize(dimensions_ + 1);
-  // addresses are in little endian format
-  u32 mod, div;
-  mod = _id % concentration_;
-  div = _id / concentration_;
-  _address->at(0) = mod;
-  for (u32 dim = 0; dim < dimensions_; dim++) {
-    u32 dimWidth = dimensionWidths_.at(dim);
-    mod = div % dimWidth;
-    div = div / dimWidth;
-    _address->at(dim + 1) = mod;
-  }
+void Network::translateTerminalIdToAddress(
+    u32 _id, std::vector<u32>* _address) const {
+  Cube::computeTerminalAddress(_id, dimensionWidths_, concentration_, _address);
+}
+
+u32 Network::translateTerminalAddressToId(
+    const std::vector<u32>* _address) const {
+  return Cube::computeTerminalId(_address, dimensionWidths_, concentration_);
+}
+
+void Network::translateRouterIdToAddress(
+    u32 _id, std::vector<u32>* _address) const {
+  Cube::computeRouterAddress(_id, dimensionWidths_, _address);
+}
+
+u32 Network::translateRouterAddressToId(
+    const std::vector<u32>* _address) const {
+  return Cube::computeRouterId(_address, dimensionWidths_);
 }
 
 void Network::collectChannels(std::vector<Channel*>* _channels) {

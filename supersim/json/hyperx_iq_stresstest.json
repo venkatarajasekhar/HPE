@@ -36,6 +36,7 @@
             "greater": false
           }
         },
+        "full_packet": true,
         "packet_lock": true,
         "idle_unlock": true
       },
@@ -47,7 +48,9 @@
     "router": {
       "architecture": "input_queued",
       "congestion_status": {
-        "latency": 1
+        "algorithm": "buffer_occupancy",
+        "latency": 1,
+        "granularity": 0
       },
       "input_queue_depth": 160,
       "vca_swa_wait": true,
@@ -77,6 +80,7 @@
             "greater": false
           }
         },
+        "full_packet": true,
         "packet_lock": true,
         "idle_unlock": true
       }
@@ -86,6 +90,7 @@
     "type": "stress_test",
     "max_injection_rate": 0.90,
     "warmup_threshold": 0.99,
+    "kill_fast": false,
     "blast_terminal": {
       "num_messages": 50,
       "min_message_size": 1,

@@ -31,6 +31,7 @@
             "greater": false
           }
         },
+        "full_packet": false,
         "packet_lock": false,
         "idle_unlock": false
       },
@@ -42,7 +43,9 @@
     "router": {
       "architecture": "input_queued",
       "congestion_status": {
-        "latency": 1
+        "algorithm": "buffer_occupancy",
+        "latency": 1,
+        "granularity": 0
       },
       "input_queue_depth": 16,
       "vca_swa_wait": false,
@@ -72,6 +75,7 @@
             "greater": false
           }
         },
+        "full_packet": false,
         "packet_lock": false,
         "idle_unlock": false
       }
@@ -79,8 +83,9 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.5,
+    "max_injection_rate": "json/injectionrates.csv.gz",
     "warmup_threshold": 0.99,
+    "kill_fast": false,
     "blast_terminal": {
       "num_messages": 3000,
       "min_message_size": 1,
@@ -90,8 +95,8 @@
       "warmup_window": 15,
       "warmup_attempts": 20,
       "traffic_pattern": {
-        "type": "uniform_random",
-        "send_to_self": false
+        "type": "matrix",
+        "file": "json/trafficmatrix.csv.gz"
       }
     },
     "message_log": {
@@ -102,7 +107,7 @@
     }
   },
   "metadata_handler": {
-    "type": "zero"
+    "type": "local_timestamp"
   },
   "debug": []
 }

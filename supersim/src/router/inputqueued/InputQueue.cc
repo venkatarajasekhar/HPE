@@ -117,6 +117,8 @@ void InputQueue::vcSchedulerResponse(u32 _vcIdx) {
     vca_.fsm = ePipelineFsm::kReadyToAdvance;
     vca_.allocatedVcIdx = _vcIdx;
     router_->vcIndexInv(_vcIdx, &vca_.allocatedPort, &vca_.allocatedVc);
+    routingAlgorithm_->vcScheduled(vca_.flit, vca_.allocatedPort,
+                                   vca_.allocatedVc);
   } else {
     // denied
     vca_.fsm = ePipelineFsm::kWaitingToRequest;
@@ -266,11 +268,11 @@ void InputQueue::processPipeline() {
     // request everything of the VC alloc
     u32 responseSize = vca_.route.size();
     assert(responseSize > 0);
+    u32 metadata = vca_.flit->getPacket()->getMetadata();
     for (u32 r = 0; r < responseSize; r++) {
       u32 requestPort, requestVc;
       vca_.route.get(r, &requestPort, &requestVc);
       u32 vcIdx = router_->vcIndex(requestPort, requestVc);
-      u32 metadata = vca_.flit->getPacket()->getMetadata();
       vcScheduler_->request(vcSchedulerIndex_, vcIdx, metadata);
     }
   }

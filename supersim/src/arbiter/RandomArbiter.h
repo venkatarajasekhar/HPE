@@ -25,7 +25,7 @@
 #include "arbiter/Arbiter.h"
 #include "event/Component.h"
 
-// compares the metadata value, random tie-breaker
+// choose random request
 class RandomArbiter : public Arbiter {
  public:
   RandomArbiter(const std::string& _name, const Component* _parent,
@@ -33,6 +33,9 @@ class RandomArbiter : public Arbiter {
   ~RandomArbiter();
 
   u32 arbitrate() override;
+
+ private:
+  std::vector<u32> temp_;
 };
 
 

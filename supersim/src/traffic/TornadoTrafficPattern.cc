@@ -19,13 +19,12 @@
 
 #include <vector>
 
-#include "network/torus/util.h"
+#include "network/cube/util.h"
 
 TornadoTrafficPattern::TornadoTrafficPattern(
     const std::string& _name, const Component* _parent,
     u32 _numTerminals, u32 _self, Json::Value _settings)
-    : PermutationTrafficPattern(_name, _parent, _numTerminals, _self,
-                                _settings) {
+    : TrafficPattern(_name, _parent, _numTerminals, _self) {
   // parse the settings
   assert(_settings.isMember("dimensions") &&
          _settings["dimensions"].isArray());
@@ -38,19 +37,31 @@ TornadoTrafficPattern::TornadoTrafficPattern(
   }
   const u32 concentration = _settings["concentration"].asUInt();
 
+  std::vector<bool> dimMask(dimensions, false);
+  if (_settings.isMember("enabled_dimensions") &&
+      _settings["enabled_dimensions"].isArray()) {
+    for (u32 dim = 0;  dim < dimensions; ++dim) {
+      dimMask.at(dim) = _settings["enabled_dimensions"][dim].asBool();
+    }
+  } else {
+    dimMask.at(0) = true;
+  }
+
   // get self as a vector address
   std::vector<u32> addr;
-  Torus::computeAddress(_self, widths, concentration, &addr);
+  Cube::computeTerminalAddress(_self, widths, concentration, &addr);
 
   // compute the tornado destination vector address
   for (u32 dim = 0; dim < dimensions; dim++) {
-    u32 dimOffset = (widths.at(dim) - 1) / 2;
-    u32 idx = dim + 1;
-    addr.at(idx) = (addr.at(idx) + dimOffset) % widths.at(dim);
+    if (dimMask.at(dim)) {
+      u32 dimOffset = (widths.at(dim) - 1) / 2;
+      u32 idx = dim + 1;
+      addr.at(idx) = (addr.at(idx) + dimOffset) % widths.at(dim);
+    }
   }
 
   // compute the tornado destination id
-  dest_ = Torus::computeId(addr, widths, concentration);
+  dest_ = Cube::computeTerminalId(&addr, widths, concentration);
 }
 
 TornadoTrafficPattern::~TornadoTrafficPattern() {}

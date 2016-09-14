@@ -27,12 +27,6 @@ namespace Torus {
 u32 computeInputPortDim(const std::vector<u32>& _dimensionWidths,
                         u32 _concentration, u32 _inputPort);
 
-void computeAddress(u32 _id, const std::vector<u32>& _widths,
-                    u32 _concentration, std::vector<u32>* _address);
-
-u32 computeId(const std::vector<u32>& _address, const std::vector<u32>& _widths,
-              u32 _concentration);
-
 }  // namespace Torus
 
 #endif  // NETWORK_TORUS_UTIL_H_

@@ -29,8 +29,8 @@
 namespace HierarchicalHyperX {
 
 Network::Network(const std::string& _name, const Component* _parent,
-                 Json::Value _settings)
-    : ::Network(_name, _parent, _settings) {
+                 MetadataHandler* _metadataHandler, Json::Value _settings)
+    : ::Network(_name, _parent, _metadataHandler, _settings) {
   // hierarchy
   hierarchy_ = _settings["hierarchy"].asUInt();
   assert(hierarchy_ >= 1);
@@ -111,8 +111,8 @@ Network::Network(const std::string& _name, const Component* _parent,
 
     // use the router factory to create a router
     routers_.at(routerAddress) = RouterFactory::createRouter(
-      routerName, this, routerAddress, routingAlgorithmFactory,
-      _settings["router"]);
+        routerName, this, routerAddress, routingAlgorithmFactory,
+        _metadataHandler, _settings["router"]);
     // set the router's address
     // routers_.at(routerAddress)->setAddress(routerAddress);
   }
@@ -365,7 +365,8 @@ Interface* Network::getInterface(u32 _id) const {
   return interfaces_.at(_id);
 }
 
-void Network::translateIdToAddress(u32 _id, std::vector<u32>* _address) const {
+void Network::translateTerminalIdToAddress(u32 _id,
+             std::vector<u32>* _address) const {
   _address->resize(localDimensions_ + globalDimensions_ + 1);
   // addresses are in little endian format
   u32 mod, div;
@@ -384,6 +385,84 @@ void Network::translateIdToAddress(u32 _id, std::vector<u32>* _address) const {
     div = div / globalDimWidth;
     _address->at(globalDim + localDimensions_ + 1) = mod;
   }
+}
+
+u32 Network::translateTerminalAddressToId(
+    const std::vector<u32>* _address) const {
+  std::vector<u32> coeff(localDimensions_ + globalDimensions_ + 1);
+
+  // compute coefficients
+  u32 prod = 1;
+  for (u32 idx = 0; idx < localDimensions_ + globalDimensions_ + 1; idx++) {
+    coeff.at(idx) = prod;
+    if (idx == 0) {
+      assert(_address->at(idx) < concentration_);
+      prod *= concentration_;
+    } else if (idx < localDimensions_ + 1) {
+      assert(_address->at(idx) < localDimensionWidths_.at(idx - 1));
+      prod *= localDimensionWidths_.at(idx - 1);
+    } else {
+      assert(_address->at(idx) <
+             globalDimensionWidths_.at(idx - localDimensions_ - 1));
+      prod *= globalDimensionWidths_.at(idx - localDimensions_ - 1);
+    }
+  }
+
+  // compute dot product
+  u32 sum = 0;
+  for (u32 idx = 0; idx < localDimensions_ + globalDimensions_ + 1; idx++) {
+    sum += coeff.at(idx) * _address->at(idx);
+  }
+
+  return sum;
+}
+
+void Network::translateRouterIdToAddress(
+    u32 _id, std::vector<u32>* _address) const {
+  _address->resize(localDimensions_ + globalDimensions_);
+
+  // addresses are in little endian format
+  u32 mod, div;
+  div = _id;
+  for (u32 localDim = 0; localDim < localDimensions_; localDim++) {
+    u32 localDimWidth = localDimensionWidths_.at(localDim);
+    mod = div % localDimWidth;
+    div = div / localDimWidth;
+    _address->at(localDim) = mod;
+  }
+  for (u32 globalDim = 0; globalDim < globalDimensions_; globalDim++) {
+    u32 globalDimWidth = globalDimensionWidths_.at(globalDim);
+    mod = div % globalDimWidth;
+    div = div / globalDimWidth;
+    _address->at(globalDim + localDimensions_) = mod;
+  }
+}
+
+u32 Network::translateRouterAddressToId(
+    const std::vector<u32>* _address) const {
+  std::vector<u32> coeff(localDimensions_ + globalDimensions_);
+
+  // compute coefficients
+  u32 prod = 1;
+  for (u32 idx = 0; idx < localDimensions_ + globalDimensions_; idx++) {
+    coeff.at(idx) = prod;
+    if (idx < localDimensions_) {
+      assert(_address->at(idx) < localDimensionWidths_.at(idx));
+      prod *= localDimensionWidths_.at(idx);
+    } else {
+      assert(_address->at(idx) <
+             globalDimensionWidths_.at(idx - localDimensions_));
+      prod *= globalDimensionWidths_.at(idx - localDimensions_);
+    }
+  }
+
+  // compute dot product
+  u32 sum = 0;
+  for (u32 idx = 0; idx < localDimensions_ + globalDimensions_; idx++) {
+    sum += coeff.at(idx) * _address->at(idx);
+  }
+
+  return sum;
 }
 
 void Network::collectChannels(std::vector<Channel*>* _channels) {

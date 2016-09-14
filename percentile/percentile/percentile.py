@@ -36,7 +36,7 @@ from matplotlib import transforms as mtransforms
 from matplotlib.ticker import FixedFormatter, FixedLocator
 
 
-class PercentileTransform(mscale.ScaleBase):
+class PercentileScale(mscale.ScaleBase):
   name = 'percentile'
 
   def __init__(self, axis, **kwargs):
@@ -44,7 +44,7 @@ class PercentileTransform(mscale.ScaleBase):
     self.nines = kwargs.get('nines', 5)
 
   def get_transform(self):
-    return self.Transform(self.nines)
+    return self.PercentileTransform(self.nines)
 
   def set_default_locators_and_formatters(self, axis):
     axis.set_major_locator(FixedLocator(
@@ -55,7 +55,7 @@ class PercentileTransform(mscale.ScaleBase):
   def limit_range_for_scale(self, vmin, vmax, minpos):
     return vmin, min(1 - 10**(-self.nines), vmax)
 
-  class Transform(mtransforms.Transform):
+  class PercentileTransform(mtransforms.Transform):
     input_dims = 1
     output_dims = 1
     is_separable = True
@@ -65,16 +65,21 @@ class PercentileTransform(mscale.ScaleBase):
       self.nines = nines
 
     def transform_non_affine(self, a):
-      masked = ma.masked_where(a > 1-10**(-1-self.nines), a)
+      oneminus = 1-a
+      oneminus[oneminus <= 0.0] = 1e-300
+
+      thres = 1.0 - 10**(-self.nines - 1)
+      mask = a > thres
+      masked = ma.masked_where(mask, a)
       if masked.mask.any():
-        return -ma.log10(1-a)
+        return -ma.log10(oneminus)
       else:
-        return -np.log10(1-a)
+        return -np.log10(oneminus)
 
     def inverted(self):
-      return PercentileTransform.InvertedTransform(self.nines)
+      return PercentileScale.InvertedPercentileTransform(self.nines)
 
-  class InvertedTransform(mtransforms.Transform):
+  class InvertedPercentileTransform(mtransforms.Transform):
     input_dims = 1
     output_dims = 1
     is_separable = True
@@ -87,6 +92,6 @@ class PercentileTransform(mscale.ScaleBase):
       return 1. - 10**(-a)
 
     def inverted(self):
-      return PercentileTransform.Transform(self.nines)
+      return PercentileScale.PercentileTransform(self.nines)
 
-mscale.register_scale(PercentileTransform)
+mscale.register_scale(PercentileScale)

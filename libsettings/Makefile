@@ -8,10 +8,12 @@ SOURCE_BASE   := src
 #--------------------- External Libraries -------------------------------------#
 HEADER_DIRS   := \
 	../libprim/inc \
-	../libjson/inc
+	../libjson/inc \
+	../libstrop/inc
 STATIC_LIBS   := \
 	../libprim/bld/libprim.a \
 	../libjson/bld/libjson.a \
+	../libstrop/bld/libstrop.a
 
 #--------------------- Cpp Lint -----------------------------------------------#
 LINT          := $(HOME)/.makeccpp/cpplint/cpplint.py
@@ -27,7 +29,7 @@ AR            := gcc-ar
 SRC_EXTS      := .cc
 HDR_EXTS      := .h .tcc
 CXX_FLAGS     := -Wall -Wextra -pedantic -Wfatal-errors -std=c++11
-CXX_FLAGS     += -march=native -g -O3 -flto
+CXX_FLAGS     += -g -O3 -flto
 LINK_FLAGS    :=
 
 #--------------------- Auto Makefile ------------------------------------------#

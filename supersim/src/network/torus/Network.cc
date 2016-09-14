@@ -21,6 +21,7 @@
 #include <cmath>
 
 #include "interface/InterfaceFactory.h"
+#include "network/cube/util.h"
 #include "network/torus/InjectionAlgorithmFactory.h"
 #include "network/torus/RoutingAlgorithmFactory.h"
 #include "network/torus/util.h"
@@ -30,8 +31,8 @@
 namespace Torus {
 
 Network::Network(const std::string& _name, const Component* _parent,
-                 Json::Value _settings)
-    : ::Network(_name, _parent, _settings) {
+                 MetadataHandler* _metadataHandler, Json::Value _settings)
+    : ::Network(_name, _parent, _metadataHandler, _settings) {
   // dimensions and concentration
   assert(_settings["dimensions"].isArray());
   dimensions_ = _settings["dimensions"].size();
@@ -71,7 +72,7 @@ Network::Network(const std::string& _name, const Component* _parent,
     // use the router factory to create a router
     routers_.at(routerAddress) = RouterFactory::createRouter(
         routerName, this, routerAddress, routingAlgorithmFactory,
-        _settings["router"]);
+        _metadataHandler, _settings["router"]);
   }
   delete routingAlgorithmFactory;
 
@@ -238,8 +239,24 @@ Interface* Network::getInterface(u32 _id) const {
   return interfaces_.at(_id);
 }
 
-void Network::translateIdToAddress(u32 _id, std::vector<u32>* _address) const {
-  computeAddress(_id, dimensionWidths_, concentration_, _address);
+void Network::translateTerminalIdToAddress(
+    u32 _id, std::vector<u32>* _address) const {
+  Cube::computeTerminalAddress(_id, dimensionWidths_, concentration_, _address);
+}
+
+u32 Network::translateTerminalAddressToId(
+    const std::vector<u32>* _address) const {
+  return Cube::computeTerminalId(_address, dimensionWidths_, concentration_);
+}
+
+void Network::translateRouterIdToAddress(
+    u32 _id, std::vector<u32>* _address) const {
+  Cube::computeRouterAddress(_id, dimensionWidths_, _address);
+}
+
+u32 Network::translateRouterAddressToId(
+    const std::vector<u32>* _address) const {
+  return Cube::computeRouterId(_address, dimensionWidths_);
 }
 
 void Network::collectChannels(std::vector<Channel*>* _channels) {

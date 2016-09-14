@@ -18,8 +18,10 @@
 #include <cassert>
 
 Router::Router(const std::string& _name, const Component* _parent,
-               const std::vector<u32>& _address, Json::Value _settings)
+               const std::vector<u32>& _address,
+               MetadataHandler* _metadataHandler, Json::Value _settings)
     : Component(_name, _parent),
+      metadataHandler_(_metadataHandler),
       address_(_address),
       numPorts_(_settings["num_ports"].asUInt()),
       numVcs_(_settings["num_vcs"].asUInt()) {
@@ -51,6 +53,10 @@ void Router::vcIndexInv(u32 _vcIdx, u32* _port, u32* _vc) const {
   *_vc = _vcIdx % numVcs_;
 }
 
-f64 Router::congestionStatus(u32 _vcIdx) const {
+void Router::packetArrival(Packet* _packet) const {
+  metadataHandler_->packetArrival(_packet);
+}
+
+f64 Router::congestionStatus(u32 _port, u32 _vc) const {
   assert(false);  // subclasses should override this if it needs to be supported
 }

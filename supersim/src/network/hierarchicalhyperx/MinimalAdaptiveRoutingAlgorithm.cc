@@ -212,9 +212,9 @@ std::unordered_set<u32> MinimalAdaptiveRoutingAlgorithm::routing(Flit* _flit,
 u32 MinimalAdaptiveRoutingAlgorithm::findHighestPort(
   std::unordered_map< u32, f64 > portAvailability) {
   assert(portAvailability.size() >= 1);
-  f64 highest = 0.0;
+  f64 highest = 1.0;
   for (auto const& port : portAvailability) {
-    if (port.second >= highest) {
+    if (port.second <= highest) {
       highest = port.second;
     }
   }
@@ -253,8 +253,8 @@ void MinimalAdaptiveRoutingAlgorithm::findPortAvailability(
            vc += (globalDimWidths_.size() + 1)
                  * localDimWidths_.size() * (1 + localDeroute_)
                  + globalDimWidths_.size()) {
-        u32 vcIdx = router_->vcIndex(port, vc);
-        availability += router_->congestionStatus(vcIdx);
+        // u32 vcIdx = router_->vcIndex(port, vc);
+        availability += router_->congestionStatus(port, vc);
       }
       portAvailability->insert(std::make_pair(port, availability));
     }
@@ -291,13 +291,13 @@ void MinimalAdaptiveRoutingAlgorithm::ifAtLocalDst(Flit* _flit,
            vc += (globalDimWidths_.size() + 1)
                   * localDimWidths_.size() * (1 + localDeroute_)
                   + globalDimWidths_.size()) {
-        u32 vcIdx = router_->vcIndex(portBase + *itr, vc);
-        availability += router_->congestionStatus(vcIdx);
+        // u32 vcIdx = router_->vcIndex(portBase + *itr, vc);
+        availability += router_->congestionStatus(portBase + *itr, vc);
         vcCount++;
       }
       availability = availability / vcCount;
       // port not congested or has to take it
-      if (availability > threshold_ || ri->localDerouteCount <= 0) {
+      if (availability < threshold_ || ri->localDerouteCount <= 0) {
         bool res = outputPorts->insert(portBase + *itr).second;
         (void)res;
         assert(res);

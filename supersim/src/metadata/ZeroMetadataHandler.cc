@@ -25,3 +25,7 @@ ZeroMetadataHandler::~ZeroMetadataHandler() {}
 void ZeroMetadataHandler::packetInjection(Application* _app, Packet* _packet) {
   _packet->setMetadata(0);
 }
+
+void ZeroMetadataHandler::packetArrival(Packet* _packet) {
+  // this isn't used in this handler
+}

@@ -23,6 +23,7 @@
 #include <vector>
 
 #include "event/Component.h"
+#include "metadata/MetadataHandler.h"
 #include "network/Channel.h"
 #include "types/FlitReceiver.h"
 #include "types/FlitSender.h"
@@ -33,7 +34,8 @@ class Router : public Component, public FlitSender, public FlitReceiver,
                public CreditSender, public CreditReceiver {
  public:
   Router(const std::string& _name, const Component* _parent,
-         const std::vector<u32>& _address, Json::Value _settings);
+         const std::vector<u32>& _address, MetadataHandler* _metadataHandler,
+         Json::Value _settings);
   virtual ~Router();
 
   u32 numPorts() const;
@@ -44,12 +46,19 @@ class Router : public Component, public FlitSender, public FlitReceiver,
   void vcIndexInv(u32 _index, u32* _port, u32* _vc) const;
 
   virtual void setInputChannel(u32 _port, Channel* _channel) = 0;
+  virtual Channel* getInputChannel(u32 _port) = 0;
   virtual void setOutputChannel(u32 port, Channel* _channel) = 0;
+  virtual Channel* getOutputChannel(u32 _port) = 0;
+
+  // this should be called by all subclasses when a packet's head flit arrives
+  //  on an input port.
+  void packetArrival(Packet* _packet) const;
 
   // this returns creditCount/maxCredits (buffer availability)
-  virtual f64 congestionStatus(u32 _vcIdx) const;
+  virtual f64 congestionStatus(u32 _port, u32 _vc) const;
 
  protected:
+  MetadataHandler* metadataHandler_;
   const std::vector<u32> address_;
   const u32 numPorts_;
   const u32 numVcs_;

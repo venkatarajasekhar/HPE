@@ -116,12 +116,12 @@ void ProgressiveAdaptiveRoutingAlgorithm::processRequest(
         u32 vcCount = 0;
         for (u32 vc = vcSet; vc < numVcs_; vc += 2 * localDimWidths_.size()
              + 2 * globalDimWidths_.size()) {
-          u32 vcIdx = router_->vcIndex(outputPort, vc);
-          availability += router_->congestionStatus(vcIdx);
+          // u32 vcIdx = router_->vcIndex(outputPort, vc);
+          availability += router_->congestionStatus(outputPort, vc);
           vcCount++;
         }
         availability = availability / vcCount;
-        if (availability <= threshold_) {
+        if (availability >= threshold_) {
           // reset localdst for valiant
           ri->localDst = nullptr;
           ri->localDstPort = nullptr;
@@ -231,13 +231,13 @@ std::unordered_set<u32> ProgressiveAdaptiveRoutingAlgorithm::routing(
         u32 vcCount = 0;
         for (u32 vc = packet->getHopCount() - 1; vc < numVcs_;
              vc += 2 * localDimensions + 2 * globalDimensions) {
-          u32 vcIdx = router_->vcIndex(portBase + *itr, vc);
-          availability += router_->congestionStatus(vcIdx);
+          // u32 vcIdx = router_->vcIndex(portBase + *itr, vc);
+          availability += router_->congestionStatus(portBase + *itr, vc);
           vcCount++;
         }
         availability = availability / vcCount;
         // port not congested
-        if (availability > threshold_) {
+        if (availability < threshold_) {
           bool res = outputPorts.insert(portBase + *itr).second;
           (void)res;
           assert(res);

@@ -20,6 +20,8 @@
 #include <cassert>
 #include <cmath>
 
+#include <algorithm>
+
 #include "application/stresstest/Application.h"
 #include "network/Network.h"
 #include "stats/MessageLog.h"
@@ -63,7 +65,7 @@ BlastTerminal::BlastTerminal(const std::string& _name, const Component* _parent,
 
   // choose a random number of cycles in the future to start
   // make an event to start the BlastTerminal in the future
-  u64 cycles = getApplication()->cyclesToSend(maxMessageSize_);
+  u64 cycles = getApplication()->cyclesToSend(maxMessageSize_, 0.1);
   cycles = gSim->rnd.nextU64(1, 1 + cycles);
   u64 time = gSim->futureCycle(1) + ((cycles - 1) * gSim->cycleTime());
   dbgprintf("start time is %lu", time);
@@ -145,9 +147,11 @@ void BlastTerminal::messageExitedNetwork(Message* _message) {
       // run the fast fail logic for early saturation detection
       if (enrouteSampleTimes_.size() == warmupWindow_) {
         if (fastFailSample_ == U32_MAX) {
-          fastFailSample_ = mut::arithmeticMean<u64>(enrouteSampleTimes_);
+          fastFailSample_ = *std::max_element(enrouteSampleValues_.begin(),
+                                              enrouteSampleValues_.end());
+          dbgprintf("fast fail sample = %u", fastFailSample_);
         } else if (flits > (fastFailSample_ * 3)) {
-          printf("fast fail detected\n");
+          dbgprintf("fast fail detected");
           saturated = true;
         }
       }
@@ -193,8 +197,9 @@ void BlastTerminal::messageExitedNetwork(Message* _message) {
     assert(enableLogging_);
     assert(messagesToLog_.erase(mId) == 1);
 
-    // log the message
+    // log the message/transaction
     app->getMessageLog()->logMessage(_message);
+    app->getMessageLog()->endTransaction(_message->getTransaction());
     loggableExitedCount_++;
 
     // detect when done
@@ -229,9 +234,11 @@ void BlastTerminal::sendNextMessage() {
   u64 now = gSim->time();
   lastSendTime_ = now;
 
+  Application* app = reinterpret_cast<Application*>(getApplication());
+
   // pick a destination
   u32 destination = trafficPattern_->nextDestination();
-  assert(destination < getApplication()->numTerminals());
+  assert(destination < app->numTerminals());
 
   // pick a random message length
   u32 messageLength = gSim->rnd.nextU64(minMessageSize_, maxMessageSize_);
@@ -242,7 +249,8 @@ void BlastTerminal::sendNextMessage() {
 
   // create the message object
   Message* message = new Message(numPackets, nullptr);
-  message->setTransaction(createTransaction());
+  u64 trans = createTransaction();
+  message->setTransaction(trans);
 
   // create the packets
   u32 flitsLeft = messageLength;
@@ -266,10 +274,11 @@ void BlastTerminal::sendNextMessage() {
   // send the message
   u32 msgId = sendMessage(message, destination);
 
-  // determine if this message should be logged
+  // determine if this message/transaction should be logged
   if ((enableLogging_) && (remainingMessages_ > 0)) {
     remainingMessages_--;
     messagesToLog_.insert(msgId);
+    app->getMessageLog()->startTransaction(trans);
   }
 }
 

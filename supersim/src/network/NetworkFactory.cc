@@ -19,28 +19,29 @@
 
 #include "network/butterfly/Network.h"
 #include "network/foldedclos/Network.h"
+#include "network/hierarchicalhyperx/Network.h"
 #include "network/hyperx/Network.h"
 #include "network/torus/Network.h"
 #include "network/uno/Network.h"
-#include "network/hierarchicalhyperx/Network.h"
 
 Network* NetworkFactory::createNetwork(
     const std::string& _name, const Component* _parent,
-    Json::Value _settings) {
+    MetadataHandler* _metadataHandler, Json::Value _settings) {
   std::string topology = _settings["topology"].asString();
 
   if (topology == "butterfly") {
-    return new Butterfly::Network(_name, _parent, _settings);
+    return new Butterfly::Network(_name, _parent, _metadataHandler, _settings);
   } else if (topology == "folded_clos") {
-    return new FoldedClos::Network(_name, _parent, _settings);
-  } else if (topology == "hyperx") {
-    return new HyperX::Network(_name, _parent, _settings);
-  } else if (topology == "torus") {
-    return new Torus::Network(_name, _parent, _settings);
-  } else if (topology == "uno") {
-    return new Uno::Network(_name, _parent, _settings);
+    return new FoldedClos::Network(_name, _parent, _metadataHandler, _settings);
   } else if (topology == "hierarchical_hyperx") {
-    return new HierarchicalHyperX::Network(_name, _parent, _settings);
+    return new HierarchicalHyperX::Network(_name, _parent,
+                                           _metadataHandler, _settings);
+  } else if (topology == "hyperx") {
+    return new HyperX::Network(_name, _parent, _metadataHandler, _settings);
+  } else if (topology == "torus") {
+    return new Torus::Network(_name, _parent, _metadataHandler, _settings);
+  } else if (topology == "uno") {
+    return new Uno::Network(_name, _parent, _metadataHandler, _settings);
   } else {
     fprintf(stderr, "unknown network topology: %s\n", topology.c_str());
     assert(false);

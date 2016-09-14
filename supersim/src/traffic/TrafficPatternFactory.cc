@@ -17,14 +17,28 @@
 
 #include <cassert>
 
+#include "traffic/BisectionStressTrafficPattern.h"
 #include "traffic/BitComplementTrafficPattern.h"
 #include "traffic/BitReverseTrafficPattern.h"
 #include "traffic/BitRotateTrafficPattern.h"
+#include "traffic/BitTransposeTrafficPattern.h"
+#include "traffic/DimComplementReverseTrafficPattern.h"
+#include "traffic/DimReverseTrafficPattern.h"
+#include "traffic/DimRotateTrafficPattern.h"
+#include "traffic/DimTransposeTrafficPattern.h"
+#include "traffic/DragonflyWorstCaseTrafficPattern.h"
 #include "traffic/LoopbackTrafficPattern.h"
+#include "traffic/MatrixTrafficPattern.h"
+#include "traffic/NeighborTrafficPattern.h"
+#include "traffic/RandomExchangeTrafficPattern.h"
+#include "traffic/RandomExchangeQuadrantTrafficPattern.h"
+#include "traffic/RandomExchangeNeighborTrafficPattern.h"
 #include "traffic/ScanTrafficPattern.h"
+#include "traffic/Swap2TrafficPattern.h"
 #include "traffic/TornadoTrafficPattern.h"
 #include "traffic/UniformRandomTrafficPattern.h"
-#include "traffic/DragonflyWC.h"
+#include "traffic/UniformRandomQuadrantTrafficPattern.h"
+
 
 TrafficPattern* TrafficPatternFactory::createTrafficPattern(
     const std::string& _name, const Component* _parent, u32 _numTerminals,
@@ -37,8 +51,11 @@ TrafficPattern* TrafficPatternFactory::createTrafficPattern(
   } else if (type == "scan") {
     return new ScanTrafficPattern(
         _name, _parent, _numTerminals, _self, _settings);
-  } else   if (type == "uniform_random") {
+  } else if (type == "uniform_random") {
     return new UniformRandomTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "uniform_random_quadrant") {
+    return new UniformRandomQuadrantTrafficPattern(
         _name, _parent, _numTerminals, _self, _settings);
   } else if (type == "bit_complement") {
     return new BitComplementTrafficPattern(
@@ -49,11 +66,47 @@ TrafficPattern* TrafficPatternFactory::createTrafficPattern(
   } else if (type == "bit_rotate") {
     return new BitRotateTrafficPattern(
         _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "bit_transpose") {
+    return new BitTransposeTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "dim_transpose") {
+    return new DimTransposeTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "dim_rotate") {
+    return new DimRotateTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "dim_reverse") {
+    return new DimReverseTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "dim_complement_reverse") {
+    return new DimComplementReverseTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "dragonfly_wc") {
+    return new DragonflyWorstCaseTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
   } else if (type == "tornado") {
     return new TornadoTrafficPattern(
         _name, _parent, _numTerminals, _self, _settings);
-  } else if (type == "dragonfly_wc") {
-    return new DragonflyWC(
+  } else if (type == "neighbor") {
+    return new NeighborTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "random_exchange") {
+    return new RandomExchangeTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "random_exchange_quadrant") {
+    return new RandomExchangeQuadrantTrafficPattern(
+      _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "random_exchange_neighbor") {
+    return new RandomExchangeNeighborTrafficPattern(
+      _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "swap2") {
+    return new Swap2TrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "bisection_stress") {
+    return new BisectionStressTrafficPattern(
+        _name, _parent, _numTerminals, _self, _settings);
+  } else if (type == "matrix") {
+    return new MatrixTrafficPattern(
         _name, _parent, _numTerminals, _self, _settings);
   } else {
     fprintf(stderr, "unknown traffic pattern: %s\n", type.c_str());

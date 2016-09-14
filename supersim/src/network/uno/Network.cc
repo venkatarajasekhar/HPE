@@ -26,8 +26,8 @@
 namespace Uno {
 
 Network::Network(const std::string& _name, const Component* _parent,
-                 Json::Value _settings)
-    : ::Network(_name, _parent, _settings) {
+                 MetadataHandler* _metadataHandler, Json::Value _settings)
+    : ::Network(_name, _parent, _metadataHandler, _settings) {
   // dimensions and concentration
   concentration_ = _settings["concentration"].asUInt();
   assert(concentration_ > 0);
@@ -48,7 +48,7 @@ Network::Network(const std::string& _name, const Component* _parent,
   // create the router
   router_ = RouterFactory::createRouter(
       "Router", this, std::vector<u32>(), routingAlgorithmFactory,
-      _settings["router"]);
+      _metadataHandler, _settings["router"]);
   delete routingAlgorithmFactory;
 
   // create an injection algorithm factory to give to the interfaces
@@ -115,9 +115,26 @@ Interface* Network::getInterface(u32 _id) const {
   return interfaces_.at(_id);
 }
 
-void Network::translateIdToAddress(u32 _id, std::vector<u32>* _address) const {
+void Network::translateTerminalIdToAddress(
+    u32 _id, std::vector<u32>* _address) const {
   _address->resize(1);
   _address->at(0) = _id;
+}
+
+u32 Network::translateTerminalAddressToId(
+    const std::vector<u32>* _address) const {
+  return _address->at(0);
+}
+
+void Network::translateRouterIdToAddress(
+    u32 _id, std::vector<u32>* _address) const {
+  _address->resize(1);
+  _address->at(0) = 0;
+}
+
+u32 Network::translateRouterAddressToId(
+    const std::vector<u32>* _address) const {
+  return 0;
 }
 
 void Network::collectChannels(std::vector<Channel*>* _channels) {
