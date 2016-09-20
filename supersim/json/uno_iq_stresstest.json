@@ -8,7 +8,7 @@
   "network": {
     "topology": "uno",
     "num_vcs": 2,
-    "concentration": 16,
+    "concentration": 32,
     "external_channel": {
       "latency": 1  // cycles
     },
@@ -35,7 +35,7 @@
         "packet_lock": false,
         "idle_unlock": false
       },
-      "init_credits": 16,
+      "init_credits": 32,
       "crossbar": {
         "latency": 1  // cycles
       }
@@ -47,7 +47,7 @@
         "latency": 1,
         "granularity": 0
       },
-      "input_queue_depth": 16,
+      "input_queue_depth": 32,
       "vca_swa_wait": false,
       "crossbar": {
         "latency": 1  // cycles
@@ -83,7 +83,8 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": "json/injectionrates.csv.gz",
+    "max_injection_rate": 0.5,
+    "relative_injection": "json/relativeinjection.csv",
     "warmup_threshold": 0.99,
     "kill_fast": false,
     "blast_terminal": {
@@ -96,7 +97,7 @@
       "warmup_attempts": 20,
       "traffic_pattern": {
         "type": "matrix",
-        "file": "json/trafficmatrix.csv.gz"
+        "file": "json/trafficmatrix.csv"
       }
     },
     "message_log": {

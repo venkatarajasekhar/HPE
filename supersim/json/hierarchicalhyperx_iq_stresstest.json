@@ -95,7 +95,8 @@
   },
   "application": {
     "type": "stress_test",
-    "max_injection_rate": 0.20,
+    "max_injection_rate": 0.10,
+    "relative_injection": "json/relativeinjection.csv",
     "warmup_threshold": 0.99,
     "kill_fast": false,
     "blast_terminal": {
@@ -107,8 +108,8 @@
       "warmup_window": 15,
       "warmup_attempts": 50,
       "traffic_pattern": {
-        "type": "uniform_random",
-        "send_to_self": false
+        "type": "matrix",
+        "file": "json/trafficmatrix.csv"
       }
     },
     "message_log": {
